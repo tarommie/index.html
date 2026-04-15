@@ -3,23 +3,24 @@
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
-body{background:#121212;color:white;font-family:sans-serif}
-input,select,button{padding:10px;margin:5px;width:95%}
+body{background:#121212;color:white;font-family:sans-serif;margin:0}
+h2{text-align:center;padding:10px;color:#00e5ff}
+input,select,button{padding:10px;margin:5px;width:95%;border-radius:8px;border:none}
 .card{background:#1e1e1e;padding:10px;margin:5px;border-radius:8px}
 .overlay{
 position:fixed;top:0;left:0;width:100%;height:100%;
 background:rgba(0,0,0,0.8);display:none;
 align-items:center;justify-content:center;
-font-size:20px;
+font-size:20px;font-weight:bold;color:#00ff9c;
 }
-.cancel{background:#ff5252}
-.admin{background:#ff9800}
+.cancel{background:#ff5252;color:white}
+.admin{background:#ff9800;color:white}
 </style>
 </head>
 
 <body>
 
-<h2>予約システム</h2>
+<h2>官職予約システム</h2>
 
 <input id="name" placeholder="名前">
 <select id="alliance"></select>
@@ -42,6 +43,7 @@ font-size:20px;
 <script>
 const API="あなたのURL";
 
+// ===== 管理者 =====
 let isAdmin=false;
 let adminPass="";
 
@@ -54,30 +56,41 @@ alert("管理者モードON");
 }
 }
 
+// ===== 同盟 =====
 const alliances=["GNt","RAK","mNt","WNK","OMG","SBR","AAA","ANA","KOA","MOF","Gao","bTQ","MPO","その他"];
-
 const aSel=document.getElementById("alliance");
+
 alliances.forEach(a=>{
 let o=document.createElement("option");
 o.value=o.text=a;
 aSel.appendChild(o);
 });
 
+// ===== 時間生成（重要修正） =====
 function generateTimes(){
-let t=[],h=9,m=0;
-for(let i=0;i<48;i++){
-let nh=h,nm=m+30;
-if(nm>=60){nm=0;nh++;}
-if(nh>=24)nh-=24;
-t.push(`${("0"+h).slice(-2)}:${("0"+m).slice(-2)}-${("0"+nh).slice(-2)}:${("0"+nm).slice(-2)}`);
-h=nh;m=nm;
+let times=[],h=9,m=0;
+for(let i=0;i<=48;i++){
+times.push(`${("0"+h).slice(-2)}:${("0"+m).slice(-2)}`);
+m+=30;
+if(m>=60){m=0;h++;}
+if(h>=24)h=0;
 }
-return t;
+return times;
 }
 
 const times=generateTimes();
 
-["time","start","end"].forEach(id=>{
+// ===== 通常予約 =====
+const timeSelect=document.getElementById("time");
+for(let i=0;i<times.length-1;i++){
+let t=`${times[i]}-${times[i+1]}`;
+let o=document.createElement("option");
+o.value=o.text=t;
+timeSelect.appendChild(o);
+}
+
+// ===== 範囲予約 =====
+["start","end"].forEach(id=>{
 const el=document.getElementById(id);
 times.forEach(t=>{
 let o=document.createElement("option");
@@ -86,6 +99,7 @@ el.appendChild(o);
 });
 });
 
+// ===== 通信 =====
 function showLoading(v){
 document.getElementById("loading").style.display=v?"flex":"none";
 }
@@ -93,14 +107,13 @@ document.getElementById("loading").style.display=v?"flex":"none";
 async function send(data){
 const res=await fetch(API,{
 method:"POST",
-mode:"cors",
 headers:{"Content-Type":"application/json"},
 body:JSON.stringify(data)
 });
 return await res.text();
 }
 
-// ===== 予約 =====
+// ===== 通常予約 =====
 async function reserveSingle(){
 showLoading(true);
 
@@ -117,13 +130,22 @@ showLoading(false);
 load();
 }
 
+// ===== 範囲予約 =====
 async function reserveRange(){
+const start=document.getElementById("start").value;
+const end=document.getElementById("end").value;
+
+if(start>=end){
+alert("終了時間は開始時間より後にしてください");
+return;
+}
+
 showLoading(true);
 
 const res=await send({
 type:"range",
-start:document.getElementById("start").value,
-end:document.getElementById("end").value,
+start:start,
+end:end,
 name:document.getElementById("name").value,
 alliance:document.getElementById("alliance").value
 });
@@ -180,6 +202,7 @@ showLoading(false);
 load();
 }
 
+// ===== 起動 =====
 load();
 </script>
 
