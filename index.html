@@ -23,7 +23,7 @@ font-size:20px;color:#00ff9c;
 
 <h2>官職予約システム</h2>
 
-<!-- 🔥 外部ブラウザボタン -->
+<!-- 外部ブラウザボタン -->
 <button class="openbtn" onclick="openExternal()">ブラウザで開く</button>
 
 <input id="name" placeholder="名前">
@@ -44,9 +44,24 @@ font-size:20px;color:#00ff9c;
 <div class="overlay" id="loading">送信中...</div>
 
 <script>
-// ===== Discord対策 =====
-if(navigator.userAgent.includes("Discord")){
-  alert("このページはDiscord内ブラウザでは正常に動作しません。\n右上メニューから『ブラウザで開く』を選択してください。");
+
+// ===== 内蔵ブラウザ検知（強化版）=====
+function isInAppBrowser(){
+  const ua = navigator.userAgent.toLowerCase();
+
+  return (
+    ua.includes("discord") ||
+    ua.includes("line") ||
+    ua.includes("fb") ||
+    ua.includes("instagram") ||
+    ua.includes("twitter") ||
+    ua.includes("wv") || // Android WebView
+    (ua.includes("iphone") && !ua.includes("safari"))
+  );
+}
+
+if(isInAppBrowser()){
+  alert("このページはアプリ内ブラウザでは正常に動作しません。\n右上メニューから『ブラウザで開く』を選択してください。");
 }
 
 // 外部ブラウザで開く
