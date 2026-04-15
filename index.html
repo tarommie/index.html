@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body {
+  font-family: sans-serif;
+  background: #121212;
+  color: #e0e0e0;
+  margin: 0;
+}
+
+.header {
+  background: #1f1f1f;
+  color: #00e5ff;
+  padding: 15px;
+  text-align: center;
+}
+
+.input-area {
+  display: flex;
+  gap: 5px;
+  padding: 10px;
+}
+
+input, select {
+  flex: 1;
+  padding: 8px;
+  background: #2a2a2a;
+  border: 1px solid #444;
+  color: white;
+}
+
+.container {
+  padding: 10px;
+}
+
+.card {
+  background: #1e1e1e;
+  padding: 12px;
+  margin-bottom: 10px;
+  border-left: 6px solid #444;
+  border-radius: 10px;
+}
+
+.btn {
+  width: 100%;
+  padding: 10px;
+  margin-top: 8px;
+  border: none;
+  border-radius: 8px;
+}
+
+.free { background: #00c853; }
+.full { background: #555; }
+
+.admin {
+  display: none;
+  padding: 10px;
+}
+
+textarea {
+  width: 100%;
+  background: #1a1a1a;
+  color: #00ff9c;
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">予約システム</div>
+
+<div class="input-area">
+  <input id="nameInput" placeholder="名前">
+  <select id="allianceSelect"></select>
+</div>
+
+<button onclick="toggleEmpty()" id="filterBtn">空きだけ表示</button>
+
+<div class="container" id="list"></div>
+
+<div class="admin" id="adminArea">
+  <button onclick="generateText()">一覧生成</button>
+  <button onclick="copyText()">コピー</button>
+  <textarea id="output"></textarea>
+</div>
+
+<script>
+// ===== API =====
+const API_URL = "https://script.google.com/macros/s/AKfycbylkYrl4A2fYdCIdTZ2KDcXYrf-ihGeMIwHSUCAsBwnX_kVjgmox3cE1m5sgfvES4Hsdg/exec";
+
+// ===== 管理者 =====
+const ADMIN_PASSWORD = "1232";
+
+// ===== 同盟 =====
+const ALLIANCES = [
+  "GNt","RAK","mNt","WNK","OMG","SBR",
+  "AAA","ANA","KOA","MOF","Gao","bTQ","MPO","その他"
+];
+
+// ===== 色 =====
+const COLORS = {
+  GNt:"#ff5252", RAK:"#448aff", mNt:"#e040fb", WNK:"#536dfe",
+  OMG:"#00bfa5", SBR:"#ff6e40", AAA:"#8d6e63", ANA:"#00e5ff",
+  KOA:"#76ff03", MOF:"#c6ff00", Gao:"#7c4dff", bTQ:"#ff4081",
+  MPO:"#78909c","その他":"#9e9e9e"
+};
+
+// ===== 管理者判定 =====
+let isAdmin=false;
+const pass=prompt("管理者パスワード");
+if(pass===ADMIN_PASSWORD){
+  isAdmin=true;
+  document.getElementById("adminArea").style.display="block";
+}
+
+// ===== 入力 =====
+const nameInput=document.getElementById("nameInput");
+const allianceSelect=document.getElementById("allianceSelect");
+
+// プルダウン
+ALLIANCES.forEach(a=>{
+  let o=document.createElement("option");
+  o.value=o.text=a;
+  allianceSelect.appendChild(o);
+});
+
+// ===== null対策 =====
+let savedName=localStorage.getItem("name");
+if(!savedName || savedName==="null") savedName="";
+nameInput.value=savedName;
+
+let savedAlliance=localStorage.getItem("alliance");
+if(!savedAlliance || savedAlliance==="null") savedAlliance=ALLIANCES[0];
+allianceSelect.value=savedAlliance;
+
+// 保存
+nameInput.onchange=e=>{
+  localStorage.setItem("name",e.target.value||"");
+};
+
+allianceSelect.onchange=e=>{
+  localStorage.setItem("alliance",e.target.value||ALLIANCES[0]);
+};
+
+// ===== 状態 =====
+let latestData=[];
+let showEmptyOnly=false;
+
+// ===== 読み込み =====
+async function load(){
+  const res=await fetch(API_URL);
+  const data=await res.json();
+  latestData=data;
+
+  const list=document.getElementById("list");
+  list.innerHTML="";
+
+  generateTimes().forEach(t=>{
+    const found=data.find(d=>d.time===t);
+    if(showEmptyOnly && found) return;
+
+    const card=document.createElement("div");
+    card.className="card";
+
+    card.innerHTML=`<div>${t}</div>`;
+
+    const btn=document.createElement("button");
+    btn.className="btn";
+
+    if(found){
+      card.innerHTML+=`<div>${found.name}（${found.alliance}）</div>`;
+      btn.innerText="予約不可";
+      btn.classList.add("full");
+      btn.disabled=true;
+      card.style.borderLeft="6px solid "+(COLORS[found.alliance]||"#444");
+    }else{
+      card.innerHTML+=`<div>空き</div>`;
+      btn.innerText="予約する";
+      btn.classList.add("free");
+      btn.onclick=()=>reserve(t);
+    }
+
+    card.appendChild(btn);
+    list.appendChild(card);
+  });
+}
+
+// ===== 予約 =====
+async function reserve(time){
+  const name=nameInput.value;
+  const alliance=allianceSelect.value;
+
+  if(!name){alert("名前入力");return;}
+
+  const res=await fetch(API_URL,{
+    method:"POST",
+    body:JSON.stringify({time,name,alliance})
+  });
+
+  const text=await res.text();
+
+  if(text==="OK"){
+    alert("予約成功");
+    load();
+  }else{
+    alert("予約済み");
+  }
+}
+
+// ===== フィルター =====
+function toggleEmpty(){
+  showEmptyOnly=!showEmptyOnly;
+  document.getElementById("filterBtn").innerText=
+    showEmptyOnly?"全て表示":"空きだけ表示";
+  load();
+}
+
+// ===== 管理者 =====
+function generateText(){
+  if(!isAdmin) return;
+
+  let txt="【予約一覧】\n";
+  generateTimes().forEach(t=>{
+    const f=latestData.find(d=>d.time===t);
+    txt+=f?`${t} ${f.alliance} ${f.name}\n`:`${t} 空き\n`;
+  });
+
+  document.getElementById("output").value=txt;
+}
+
+function copyText(){
+  if(!isAdmin) return;
+
+  const t=document.getElementById("output");
+  t.select();
+  document.execCommand("copy");
+  alert("コピー完了");
+}
+
+// ===== 時間 =====
+function generateTimes(){
+  let times=[],h=9,m=0;
+  for(let i=0;i<48;i++){
+    let nh=h,nm=m+30;
+    if(nm>=60){nm=0;nh++;}
+    if(nh>=24) nh-=24;
+
+    times.push(
+      `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}-`+
+      `${String(nh).padStart(2,'0')}:${String(nm).padStart(2,'0')}`
+    );
+
+    h=nh;m=nm;
+  }
+  return times;
+}
+
+// 自動更新
+setInterval(load,5000);
+load();
+
+</script>
+
+</body>
+</html>
