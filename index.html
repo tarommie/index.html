@@ -4,14 +4,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
 body{background:#121212;color:white;font-family:sans-serif;margin:0}
-h2{text-align:center;padding:10px;color:#00e5ff}
+h2{text-align:center;color:#00e5ff}
 input,select,button{padding:10px;margin:5px;width:95%;border-radius:8px;border:none}
 .card{background:#1e1e1e;padding:10px;margin:5px;border-radius:8px}
 .overlay{
 position:fixed;top:0;left:0;width:100%;height:100%;
 background:rgba(0,0,0,0.8);display:none;
 align-items:center;justify-content:center;
-font-size:20px;font-weight:bold;color:#00ff9c;
+font-size:20px;color:#00ff9c;
 }
 .cancel{background:#ff5252;color:white}
 .admin{background:#ff9800;color:white}
@@ -43,7 +43,7 @@ font-size:20px;font-weight:bold;color:#00ff9c;
 <script>
 const API="あなたのURL";
 
-// ===== 管理者 =====
+// 管理者
 let isAdmin=false;
 let adminPass="";
 
@@ -56,7 +56,7 @@ alert("管理者モードON");
 }
 }
 
-// ===== 同盟 =====
+// 同盟
 const alliances=["GNt","RAK","mNt","WNK","OMG","SBR","AAA","ANA","KOA","MOF","Gao","bTQ","MPO","その他"];
 const aSel=document.getElementById("alliance");
 
@@ -66,7 +66,7 @@ o.value=o.text=a;
 aSel.appendChild(o);
 });
 
-// ===== 時間生成 =====
+// 時間生成
 function generateTimes(){
 let times=[],h=9,m=0;
 for(let i=0;i<=48;i++){
@@ -99,24 +99,27 @@ el.appendChild(o);
 });
 });
 
-// 🔥 初期値設定（重要）
-document.getElementById("start").selectedIndex = 0;
-document.getElementById("end").selectedIndex = 1;
+// 初期値
+document.getElementById("start").selectedIndex=0;
+document.getElementById("end").selectedIndex=1;
 
-// ===== 通信 =====
+// 通信（🔥ここが修正ポイント）
+async function send(data){
+  await fetch(API,{
+    method:"POST",
+    mode:"no-cors",
+    headers:{
+      "Content-Type":"text/plain;charset=utf-8"
+    },
+    body:JSON.stringify(data)
+  });
+}
+
 function showLoading(v){
 document.getElementById("loading").style.display=v?"flex":"none";
 }
 
-async function send(data){
-fetch(API,{
-method:"POST",
-mode:"no-cors",
-body:JSON.stringify(data)
-});
-}
-
-// ===== 通常予約 =====
+// 通常予約
 async function reserveSingle(){
 showLoading(true);
 
@@ -130,13 +133,12 @@ alliance:document.getElementById("alliance").value
 setTimeout(()=>{showLoading(false);load();},1200);
 }
 
-// ===== 範囲予約 =====
+// 範囲予約
 async function reserveRange(){
 const start=document.getElementById("start").value;
 const end=document.getElementById("end").value;
 
-// 🔥 空チェック
-if(!start || !end){
+if(!start||!end){
 alert("時間を選択してください");
 return;
 }
@@ -159,7 +161,7 @@ alliance:document.getElementById("alliance").value
 setTimeout(()=>{showLoading(false);load();},1200);
 }
 
-// ===== 表示 =====
+// 表示
 async function load(){
 const res=await fetch(API);
 const data=await res.json();
@@ -189,21 +191,20 @@ html+=`</div>`;
 document.getElementById("list").innerHTML=html;
 }
 
-// ===== キャンセル =====
+// キャンセル
 async function cancel(id){
 showLoading(true);
 await send({action:"cancel",id});
 setTimeout(()=>{showLoading(false);load();},800);
 }
 
-// ===== 管理者削除 =====
+// 管理者削除
 async function adminDelete(id){
 showLoading(true);
 await send({action:"admin_delete",id,password:adminPass});
 setTimeout(()=>{showLoading(false);load();},800);
 }
 
-// ===== 起動 =====
 load();
 </script>
 
