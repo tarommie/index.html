@@ -5,16 +5,51 @@
 <style>
 body{background:#121212;color:white;font-family:sans-serif;margin:0}
 h2{text-align:center;color:#00e5ff}
-input,select,button{padding:10px;margin:5px;width:95%;border-radius:8px;border:none}
-.card{background:#1e1e1e;padding:10px;margin:5px;border-radius:8px}
+
+input,select,button{
+  padding:10px;margin:5px;width:95%;
+  border-radius:8px;border:none;
+  font-size:14px;
+}
+
+.card{
+  background:#1e1e1e;
+  padding:10px;margin:5px;
+  border-radius:8px;
+}
+
+/* 空き・満席 */
+.free{background:#1b5e20}
+.full{background:#7f0000}
+
+/* 自分 */
+.mine{
+  border:2px solid #00e5ff;
+  box-shadow:0 0 10px #00e5ff;
+}
+
+/* 同盟カラー */
+.alliance-GNt{color:#42a5f5}
+.alliance-RAK{color:#ef5350}
+.alliance-OMG{color:#ba68c8}
+.alliance-AAA{color:#4dd0e1}
+.alliance-SBR{color:#ffb74d}
+.alliance-WNK{color:#aed581}
+.alliance-ANA{color:#f06292}
+.alliance-KOA{color:#9575cd}
+.alliance-MOF{color:#90a4ae}
+
+.slot{font-size:12px;opacity:0.8}
+.auto{color:#00ff9c;font-size:13px}
+
 .overlay{
 position:fixed;top:0;left:0;width:100%;height:100%;
 background:rgba(0,0,0,0.8);display:none;
 align-items:center;justify-content:center;
 font-size:20px;color:#00ff9c;
 }
-.slot{font-size:12px;color:#aaa}
-.auto{color:#00ff9c;font-size:13px}
+
+.filter{margin:10px}
 </style>
 </head>
 
@@ -24,6 +59,10 @@ font-size:20px;color:#00ff9c;
 
 <input id="name" placeholder="名前">
 <select id="alliance"></select>
+
+<div class="filter">
+<label><input type="checkbox" id="onlyFree"> 空きだけ表示</label>
+</div>
 
 <h3>通常予約</h3>
 <select id="time"></select>
@@ -43,224 +82,184 @@ font-size:20px;color:#00ff9c;
 <script>
 const API="https://script.google.com/macros/s/AKfycbylkYrl4A2fYdCIdTZ2KDcXYrf-ihGeMIwHSUCAsBwnX_kVjgmox3cE1m5sgfvES4Hsdg/exec";
 
-let currentData = [];
-let lastDataString = "";
+let currentData=[];
+let lastDataString="";
+
+// ===== 要素取得（🔥ここが今回の重要修正）=====
+const nameEl = document.getElementById("name");
+const allianceEl = document.getElementById("alliance");
+const timeEl = document.getElementById("time");
+const startEl = document.getElementById("start");
+const endEl = document.getElementById("end");
+const list = document.getElementById("list");
+const preview = document.getElementById("preview");
+const loading = document.getElementById("loading");
+const onlyFree = document.getElementById("onlyFree");
 
 // ===== 同盟 =====
 const alliances=["GNt","RAK","mNt","WNK","OMG","SBR","AAA","ANA","KOA","MOF","Gao","bTQ","MPO","その他"];
-const aSel=document.getElementById("alliance");
+alliances.forEach(a=>allianceEl.add(new Option(a,a)));
 
-alliances.forEach(a=>{
-  let o=document.createElement("option");
-  o.value=o.text=a;
-  aSel.appendChild(o);
-});
-
-// ===== 時間処理 =====
+// ===== 時間 =====
 function timeToMinutes(t){
-  const [h,m] = t.split(":").map(Number);
-  let total = h*60+m;
-  if(h<9) total+=1440;
-  return total;
+const[h,m]=t.split(":").map(Number);
+let total=h*60+m;
+if(h<9)total+=1440;
+return total;
 }
 
 function getSlots(start,end){
-  let arr=[];
-  let cur=timeToMinutes(start);
-  const endMin=timeToMinutes(end);
-
-  while(cur<endMin){
-    const h=Math.floor(cur/60)%24;
-    const m=cur%60;
-    arr.push(("0"+h).slice(-2)+":"+("0"+m).slice(-2));
-    cur+=30;
-  }
-  return arr;
+let arr=[],cur=timeToMinutes(start),endMin=timeToMinutes(end);
+while(cur<endMin){
+let h=Math.floor(cur/60)%24,m=cur%60;
+arr.push(("0"+h).slice(-2)+":"+("0"+m).slice(-2));
+cur+=30;
+}
+return arr;
 }
 
-// ===== 使用済み =====
 function getUsedSlots(){
-  return currentData
-    .filter(d => d.time)
-    .map(d => d.time.split("-")[0]);
+return currentData.filter(d=>d.time).map(d=>d.time.split("-")[0]);
 }
 
 // ===== プレビュー =====
 function previewRange(){
-  const start=document.getElementById("start").value;
-  const end=document.getElementById("end").value;
+const slots=getSlots(startEl.value,endEl.value);
+const used=getUsedSlots();
 
-  const slots=getSlots(start,end);
-  const used=getUsedSlots();
+let html="<div class='card'>配置プレビュー<br>";
+let free=[];
 
-  let html="<div class='card'>配置プレビュー<br>";
+slots.forEach(s=>{
+const isFree=!used.includes(s);
+html+=`${s} → ${isFree?"空き":"満席"}<br>`;
+if(isFree)free.push(s);
+});
 
-  let freeSlots=[];
+html+=free.length
+? `<div class="auto">👉 配置候補: ${free.join(" / ")}</div>`
+: `<div class="auto">❌ 空きなし</div>`;
 
-  slots.forEach(s=>{
-    const isFree = !used.includes(s);
-    html+=`${s} → ${isFree ? "空き" : "満席"}<br>`;
-    if(isFree) freeSlots.push(s);
-  });
-
-  if(freeSlots.length > 0){
-    html+=`<div class="auto">👉 配置候補: ${freeSlots.join(" / ")}</div>`;
-  }else{
-    html+=`<div class="auto">❌ 空きなし</div>`;
-  }
-
-  html+="</div>";
-
-  document.getElementById("preview").innerHTML=html;
+preview.innerHTML=html+"</div>";
 }
 
-// ===== 通常予約 =====
+// ===== 予約 =====
 async function reserveSingle(){
-const name=document.getElementById("name").value.trim();
-const time=document.getElementById("time").value;
-
-if(!name){
-  alert("名前を入力してください");
-  return;
-}
-
-if(currentData.some(d => d.time === time)){
-  alert("この時間は満席です！");
-  return;
-}
+if(!nameEl.value)return alert("名前入力");
+if(currentData.some(d=>d.time===timeEl.value))return alert("満席");
 
 showLoading(true);
 
 await fetch(API,{
-  method:"POST",
-  mode:"no-cors",
-  body:JSON.stringify({
-    type:"single",
-    time,
-    name,
-    alliance:document.getElementById("alliance").value
-  })
+method:"POST",
+mode:"no-cors",
+headers:{"Content-Type":"text/plain"},
+body:JSON.stringify({
+type:"single",
+time:timeEl.value,
+name:nameEl.value,
+alliance:allianceEl.value
+})
 });
 
-setTimeout(()=>{
-  showLoading(false);
-  load(true); // 強制更新
-},1500);
+setTimeout(()=>{showLoading(false);load(true)},1200);
 }
 
-// ===== 範囲予約 =====
 async function reserveRange(){
-const name=document.getElementById("name").value.trim();
-const start=document.getElementById("start").value;
-const end=document.getElementById("end").value;
+if(!nameEl.value)return alert("名前入力");
+if(timeToMinutes(startEl.value)>=timeToMinutes(endEl.value))return alert("時間エラー");
 
-if(!name){
-  alert("名前を入力してください");
-  return;
-}
-
-if(timeToMinutes(start) >= timeToMinutes(end)){
-  alert("時間が不正です");
-  return;
-}
-
-const slots=getSlots(start,end);
+const slots=getSlots(startEl.value,endEl.value);
 const used=getUsedSlots();
 
-const target=slots.find(s => !used.includes(s));
-
-if(!target){
-  alert("この時間帯はすべて満席です！");
-  return;
-}
+if(!slots.find(s=>!used.includes(s)))return alert("空きなし");
 
 showLoading(true);
 
 await fetch(API,{
-  method:"POST",
-  mode:"no-cors",
-  body:JSON.stringify({
-    type:"range",
-    start,
-    end,
-    name,
-    alliance:document.getElementById("alliance").value
-  })
+method:"POST",
+mode:"no-cors",
+headers:{"Content-Type":"text/plain"},
+body:JSON.stringify({
+type:"range",
+start:startEl.value,
+end:endEl.value,
+name:nameEl.value,
+alliance:allianceEl.value
+})
 });
 
-setTimeout(()=>{
-  showLoading(false);
-  load(true); // 強制更新
-},1500);
+setTimeout(()=>{showLoading(false);load(true)},1200);
 }
 
-// ===== 表示（差分更新）=====
+// ===== 表示 =====
 async function load(force=false){
+try{
 const res=await fetch(API);
-const data=await res.json();
+const text=await res.text();
+if(!text)return;
 
-const newDataString = JSON.stringify(data);
+const data=JSON.parse(text);
 
-// 🔥 差分チェック
-if(!force && newDataString === lastDataString){
-  return;
-}
+const str=JSON.stringify(data);
+if(!force&&str===lastDataString)return;
 
-lastDataString = newDataString;
-currentData = data;
+lastDataString=str;
+currentData=data;
 
 const used=getUsedSlots();
+const my=nameEl.value;
 
 let html="";
 
 data.forEach(d=>{
-let label=d.time || (d.start+"〜"+d.end);
 
-let slotInfo="";
-if(d.time){
-  const s=d.time.split("-")[0];
-  slotInfo=`<div class="slot">${used.includes(s)?"満席":"空き"}</div>`;
-}
+  let isFull=false;
 
-html+=`<div class="card">
-${label} ${d.name} (${d.alliance||""})
-${slotInfo}
-</div>`;
+  if(d.time){
+    const s=d.time.split("-")[0];
+    isFull=used.includes(s);
+  }
+
+  const isMine=d.name===my;
+
+  // フィルター修正済み
+  if(onlyFree.checked && d.time && isFull) return;
+
+  html+=`
+  <div class="card ${isFull?"full":"free"} ${isMine?"mine":""} alliance-${d.alliance}">
+    ${d.time||(d.start+"〜"+d.end)} ${d.name} (${d.alliance||""})
+    <div class="slot">${d.time ? (isFull?"満席":"空き") : ""}</div>
+  </div>`;
 });
 
-document.getElementById("list").innerHTML=html;
+list.innerHTML=html;
+
+}catch(e){
+console.log("通信エラー",e);
+}
 }
 
 // ===== UI =====
 function showLoading(v){
-document.getElementById("loading").style.display=v?"flex":"none";
+loading.style.display=v?"flex":"none";
 }
 
 // ===== 初期化 =====
-function init(){
-let h=9,m=0,times=[];
+(function(){
+let h=9,m=0,t=[];
 for(let i=0;i<48;i++){
-times.push(("0"+h).slice(-2)+":"+("0"+m).slice(-2));
+t.push(("0"+h).slice(-2)+":"+("0"+m).slice(-2));
 m+=30;if(m>=60){m=0;h++}if(h>=24)h-=24;
 }
+t.forEach((v,i)=>timeEl.add(new Option(v+"-"+t[(i+1)%48],v+"-"+t[(i+1)%48])));
+t.forEach(v=>{startEl.add(new Option(v,v));endEl.add(new Option(v,v));});
+})();
 
-const tSel=document.getElementById("time");
-times.forEach((t,i)=>{
-let next=times[(i+1)%times.length];
-tSel.add(new Option(t+"-"+next,t+"-"+next));
-});
+onlyFree.onchange=()=>load(true);
 
-["start","end"].forEach(id=>{
-const el=document.getElementById(id);
-times.forEach(t=>el.add(new Option(t,t)));
-});
-}
-
-init();
 load();
-
-// 🔥 リアルタイム更新（差分のみ反映）
-setInterval(load, 5000);
+setInterval(load,5000);
 
 </script>
 
