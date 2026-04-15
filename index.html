@@ -15,12 +15,16 @@ font-size:20px;color:#00ff9c;
 }
 .cancel{background:#ff5252;color:white}
 .admin{background:#ff9800;color:white}
+.openbtn{background:#03a9f4;color:white}
 </style>
 </head>
 
 <body>
 
 <h2>官職予約システム</h2>
+
+<!-- 🔥 外部ブラウザボタン -->
+<button class="openbtn" onclick="openExternal()">ブラウザで開く</button>
 
 <input id="name" placeholder="名前">
 <select id="alliance"></select>
@@ -40,6 +44,16 @@ font-size:20px;color:#00ff9c;
 <div class="overlay" id="loading">送信中...</div>
 
 <script>
+// ===== Discord対策 =====
+if(navigator.userAgent.includes("Discord")){
+  alert("このページはDiscord内ブラウザでは正常に動作しません。\n右上メニューから『ブラウザで開く』を選択してください。");
+}
+
+// 外部ブラウザで開く
+function openExternal(){
+  window.open(location.href, "_blank");
+}
+
 const API="https://script.google.com/macros/s/AKfycbylkYrl4A2fYdCIdTZ2KDcXYrf-ihGeMIwHSUCAsBwnX_kVjgmox3cE1m5sgfvES4Hsdg/exec";
 
 let currentData = [];
@@ -123,24 +137,6 @@ async function send(data){
   });
 }
 
-// ===== 保存待ち（重要）=====
-async function waitForUpdate(checkFn, timeout=5000){
-  const start = Date.now();
-
-  while(Date.now() - start < timeout){
-    const res = await fetch(API);
-    const data = await res.json();
-
-    if(checkFn(data)){
-      return true;
-    }
-
-    await new Promise(r=>setTimeout(r,300));
-  }
-
-  return false;
-}
-
 function showLoading(v){
 document.getElementById("loading").style.display=v?"flex":"none";
 }
@@ -170,13 +166,10 @@ name:name,
 alliance:document.getElementById("alliance").value
 });
 
-// 保存確認
-await waitForUpdate(data =>
-  data.some(d => d.time === selectedTime && d.name === name)
-);
-
-showLoading(false);
-load();
+setTimeout(()=>{
+  showLoading(false);
+  load();
+},1500);
 }
 
 // ===== 範囲予約 =====
@@ -202,13 +195,10 @@ name:name,
 alliance:document.getElementById("alliance").value
 });
 
-// 範囲登録確認
-await waitForUpdate(data =>
-  data.some(d => d.name === name && d.type === "range")
-);
-
-showLoading(false);
-load();
+setTimeout(()=>{
+  showLoading(false);
+  load();
+},1500);
 }
 
 // ===== 表示 =====
@@ -247,18 +237,20 @@ document.getElementById("list").innerHTML=html;
 async function cancel(id){
 showLoading(true);
 await send({action:"cancel",id});
-await waitForUpdate(data => !data.some(d => d.id === id));
-showLoading(false);
-load();
+setTimeout(()=>{
+  showLoading(false);
+  load();
+},1200);
 }
 
 // ===== 管理者削除 =====
 async function adminDelete(id){
 showLoading(true);
 await send({action:"admin_delete",id,password:adminPass});
-await waitForUpdate(data => !data.some(d => d.id === id));
-showLoading(false);
-load();
+setTimeout(()=>{
+  showLoading(false);
+  load();
+},1200);
 }
 
 load();
