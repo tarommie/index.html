@@ -37,13 +37,12 @@ font-size:20px;color:#00ff9c;
 <button onclick="reserveRange()">範囲予約</button>
 
 <div id="list"></div>
-
 <div class="overlay" id="loading">送信中...</div>
 
 <script>
 const API="https://script.google.com/macros/s/AKfycbylkYrl4A2fYdCIdTZ2KDcXYrf-ihGeMIwHSUCAsBwnX_kVjgmox3cE1m5sgfvES4Hsdg/exec";
 
-// 管理者
+// ===== 管理者 =====
 let isAdmin=false;
 let adminPass="";
 
@@ -56,7 +55,7 @@ alert("管理者モードON");
 }
 }
 
-// 同盟
+// ===== 同盟 =====
 const alliances=["GNt","RAK","mNt","WNK","OMG","SBR","AAA","ANA","KOA","MOF","Gao","bTQ","MPO","その他"];
 const aSel=document.getElementById("alliance");
 
@@ -66,30 +65,54 @@ o.value=o.text=a;
 aSel.appendChild(o);
 });
 
-// 時間生成
+// ===== 24時間生成 =====
 function generateTimes(){
-let times=[],h=9,m=0;
-for(let i=0;i<=48;i++){
-times.push(`${("0"+h).slice(-2)}:${("0"+m).slice(-2)}`);
-m+=30;
-if(m>=60){m=0;h++;}
-if(h>=24)h=0;
+  let times = [];
+  let h = 9;
+  let m = 0;
+
+  for(let i=0;i<48;i++){
+    times.push(`${("0"+h).slice(-2)}:${("0"+m).slice(-2)}`);
+
+    m += 30;
+    if(m >= 60){
+      m = 0;
+      h++;
+    }
+
+    if(h >= 24){
+      h -= 24;
+    }
+  }
+
+  return times;
 }
-return times;
+
+// ===== 跨ぎ対応 =====
+function timeToMinutes(t){
+  const [h,m] = t.split(":").map(Number);
+  let total = h*60 + m;
+
+  if(h < 9){
+    total += 24*60;
+  }
+
+  return total;
 }
 
 const times=generateTimes();
 
-// 通常予約
+// ===== 通常予約 =====
 const timeSelect=document.getElementById("time");
-for(let i=0;i<times.length-1;i++){
-let t=`${times[i]}-${times[i+1]}`;
+for(let i=0;i<times.length;i++){
+let next = times[(i+1)%times.length];
+let t=`${times[i]}-${next}`;
 let o=document.createElement("option");
 o.value=o.text=t;
 timeSelect.appendChild(o);
 }
 
-// 範囲予約
+// ===== 範囲予約 =====
 ["start","end"].forEach(id=>{
 const el=document.getElementById(id);
 times.forEach(t=>{
@@ -99,58 +122,59 @@ el.appendChild(o);
 });
 });
 
-// 初期値
-document.getElementById("start").selectedIndex=0;
-document.getElementById("end").selectedIndex=1;
-
-// 通信（🔥ここが修正ポイント）
+// ===== 通信（修正版）=====
 async function send(data){
-  await fetch(API,{
+  const res = await fetch(API,{
     method:"POST",
-    mode:"no-cors",
+    mode:"cors",
     headers:{
-      "Content-Type":"text/plain;charset=utf-8"
+      "Content-Type":"application/json"
     },
     body:JSON.stringify(data)
   });
+
+  const text = await res.text();
+  return text;
 }
 
 function showLoading(v){
 document.getElementById("loading").style.display=v?"flex":"none";
 }
 
-// 通常予約
+// ===== 通常予約 =====
 async function reserveSingle(){
 showLoading(true);
 
-await send({
+const res = await send({
 type:"single",
 time:document.getElementById("time").value,
 name:document.getElementById("name").value,
 alliance:document.getElementById("alliance").value
 });
 
-setTimeout(()=>{showLoading(false);load();},1200);
+showLoading(false);
+
+if(res === "duplicate"){
+alert("すでに予約しています！");
+return;
 }
 
-// 範囲予約
+load();
+}
+
+// ===== 範囲予約 =====
 async function reserveRange(){
 const start=document.getElementById("start").value;
 const end=document.getElementById("end").value;
 
-if(!start||!end){
-alert("時間を選択してください");
-return;
-}
-
-if(start>=end){
+if(timeToMinutes(start) >= timeToMinutes(end)){
 alert("終了時間は開始時間より後にしてください");
 return;
 }
 
 showLoading(true);
 
-await send({
+const res = await send({
 type:"range",
 start:start,
 end:end,
@@ -158,10 +182,17 @@ name:document.getElementById("name").value,
 alliance:document.getElementById("alliance").value
 });
 
-setTimeout(()=>{showLoading(false);load();},1200);
+showLoading(false);
+
+if(res === "duplicate"){
+alert("すでに予約しています！");
+return;
 }
 
-// 表示
+load();
+}
+
+// ===== 表示 =====
 async function load(){
 const res=await fetch(API);
 const data=await res.json();
@@ -191,18 +222,20 @@ html+=`</div>`;
 document.getElementById("list").innerHTML=html;
 }
 
-// キャンセル
+// ===== キャンセル =====
 async function cancel(id){
 showLoading(true);
 await send({action:"cancel",id});
-setTimeout(()=>{showLoading(false);load();},800);
+showLoading(false);
+load();
 }
 
-// 管理者削除
+// ===== 管理者削除 =====
 async function adminDelete(id){
 showLoading(true);
 await send({action:"admin_delete",id,password:adminPass});
-setTimeout(()=>{showLoading(false);load();},800);
+showLoading(false);
+load();
 }
 
 load();
