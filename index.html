@@ -21,30 +21,25 @@ body::before{
 }
 #snow{position:fixed;width:100%;height:100%;pointer-events:none;}
 .snowflake{
-  position:absolute;
-  top:-10px;
-  background:white;
-  border-radius:50%;
-  opacity:0.8;
-  animation:fall linear infinite;
+  position: absolute;
+  top: -10px;
+  background: white;
+  border-radius: 50%;
+  animation: fall linear infinite;
 }
+
 @keyframes fall{
-  0%{transform:translateY(0);}
-  100%{transform:translateY(110vh);}
+  0%{
+    transform: translateY(0) translateX(0) rotate(0deg);
+    opacity: 0;
+  }
+  5%{ opacity: 1; }
+  90%{ opacity: 0.8; }
+  100%{
+    transform: translateY(110vh) translateX(var(--drift)) rotate(360deg);
+    opacity: 0;
+  }
 }
-
-/* ロゴ */
-.logo{
-  position:absolute;
-  top:10px;
-  left:10px;
-  width:42px;
-  z-index:2;
-  opacity:0.3;
-  filter:brightness(1.2) drop-shadow(0 2px 4px rgba(0,0,0,0.3));
-  pointer-events:none;
-}
-
 
 .container{position:relative;z-index:3;padding:10px;}
 
@@ -154,7 +149,6 @@ button.active{
 <body>
 
 <div id="snow"></div>
-<img src="unnamed.png" class="logo">
 
 <div class="container">
 
@@ -281,10 +275,9 @@ function updateEnd(startSel,endSel){
 
 function checkReady(){
   const used=getUsed();
-  singleBtn.classList.toggle("ready",
-    nameEl.value.trim() && accelEl.value>0 &&
-    timeEl.value && !used.includes(timeEl.value)
-  );
+ singleBtn.classList.toggle("ready",
+  nameEl.value.trim() && accelEl.value>0 && timeEl.value  // ← 埋まってても押せる
+);
   let hasRange=false, hasFree=false;
   startEls.forEach((s,i)=>{
     if(s.value && endEls[i].value){
@@ -355,13 +348,26 @@ rangeBtn.onclick=async()=>{
 };
 
 function createSnow(){
-  const s=document.getElementById("snow");
-  for(let i=0;i<40;i++){
-    let e=document.createElement("div");
-    e.className="snowflake";
-    e.style.left=Math.random()*100+"vw";
-    e.style.width=e.style.height=(Math.random()*4+2)+"px";
-    e.style.animationDuration=(Math.random()*5+5)+"s";
+  const s = document.getElementById("snow");
+
+  for(let i = 0; i < 60; i++){
+    let e = document.createElement("div");
+    e.className = "snowflake";
+
+    const size = Math.random() * 5 + 2;
+    const duration = Math.random() * 8 + 6;
+    const delay = Math.random() * 10;
+    const drift = (Math.random() - 0.5) * 120; // 左右のゆらぎ幅
+
+    e.style.cssText = `
+      left: ${Math.random() * 100}vw;
+      width: ${size}px;
+      height: ${size}px;
+      opacity: ${Math.random() * 0.5 + 0.2};
+      animation-duration: ${duration}s;
+      animation-delay: -${delay}s;
+      --drift: ${drift}px;
+    `;
     s.appendChild(e);
   }
 }
