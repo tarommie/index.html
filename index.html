@@ -21,23 +21,22 @@ body::before{
 }
 #snow{position:fixed;width:100%;height:100%;pointer-events:none;}
 .snowflake{
-  position: absolute;
-  top: -10px;
-  background: white;
-  border-radius: 50%;
-  animation: fall linear infinite;
+  position:absolute;
+  top:-60px;
+  animation:fall linear infinite;
+  pointer-events:none;
+  filter:drop-shadow(0 0 2px rgba(255,255,255,0.6));
 }
-
 @keyframes fall{
   0%{
-    transform: translateY(0) translateX(0) rotate(0deg);
-    opacity: 0;
+    transform:translateY(0) translateX(0) rotate(0deg);
+    opacity:0;
   }
-  5%{ opacity: 1; }
-  90%{ opacity: 0.8; }
+  5%{opacity:1;}
+  90%{opacity:0.7;}
   100%{
-    transform: translateY(110vh) translateX(var(--drift)) rotate(360deg);
-    opacity: 0;
+    transform:translateY(110vh) translateX(var(--drift)) rotate(var(--spin));
+    opacity:0;
   }
 }
 
@@ -235,15 +234,24 @@ toggleBtn.onclick=()=>{
   updateAll();
 };
 
+// 変更後
+let lastTimeOptions = "";
+
 function updateTimeOptions(){
-  const selected=timeEl.value;
-  timeEl.innerHTML="";
-  const used=getUsed();
-  times.forEach(v=>{
+  const used = getUsed();
+  const key = times.filter(v => !(showOnlyFree && used.includes(v))).join(",");
+
+  // 前回と同じなら再構築しない
+  if(key === lastTimeOptions) return;
+  lastTimeOptions = key;
+
+  const selected = timeEl.value;
+  timeEl.innerHTML = "";
+  times.forEach(v => {
     if(showOnlyFree && used.includes(v)) return;
-    timeEl.add(new Option(v,v));
+    timeEl.add(new Option(v, v));
   });
-  if(selected) timeEl.value=selected;
+  if(selected) timeEl.value = selected;
 }
 
 function updateRangeOptions(){
@@ -288,9 +296,9 @@ function checkReady(){
       }
     }
   });
-  rangeBtn.classList.toggle("ready",
-    nameEl.value.trim() && accelEl.value>0 && hasRange && hasFree
-  );
+rangeBtn.classList.toggle("ready",
+  nameEl.value.trim() && accelEl.value>0 && hasRange
+);
 }
 
 function showLoading(v){
@@ -342,49 +350,140 @@ rangeBtn.onclick=async()=>{
     name:nameEl.value,alliance:allianceEl.value,accel:accelEl.value
   })})});
   const text=await res.text();
-  if(text!=="ok"){showLoading(false);alert("予約失敗");return;}
+  if(text === "duplicate"){
+  showLoading(false);
+  alert("選択した時間帯はすべて埋まっています");
+  load();
+  return;
+}
+if(text === "invalid"){
+  showLoading(false);
+  alert("有効な時間帯を選択してください");
+  return;
+}
+if(text !== "ok"){showLoading(false); alert("予約失敗"); return;}
   showSuccess();
   setTimeout(()=>{showLoading(false);load();},1200);
 };
 
 function createSnow(){
-  const s = document.getElementById("snow");
+  const container = document.getElementById("snow");
 
-  for(let i = 0; i < 60; i++){
-    let e = document.createElement("div");
-    e.className = "snowflake";
+  // 結晶の形を6種類SVGで定義
+  const crystals = [
+    // 6本腕の基本結晶
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-12 -12 24 24">
+      <g stroke="white" stroke-linecap="round">
+        <line x1="0" y1="-10" x2="0" y2="10" stroke-width="1.2"/>
+        <line x1="-8.66" y1="-5" x2="8.66" y2="5" stroke-width="1.2"/>
+        <line x1="-8.66" y1="5" x2="8.66" y2="-5" stroke-width="1.2"/>
+        <line x1="0" y1="-10" x2="-3" y2="-7" stroke-width="0.8"/>
+        <line x1="0" y1="-10" x2="3" y2="-7" stroke-width="0.8"/>
+        <line x1="0" y1="10" x2="-3" y2="7" stroke-width="0.8"/>
+        <line x1="0" y1="10" x2="3" y2="7" stroke-width="0.8"/>
+        <line x1="-8.66" y1="-5" x2="-7" y2="-8" stroke-width="0.8"/>
+        <line x1="-8.66" y1="-5" x2="-6" y2="-2" stroke-width="0.8"/>
+        <line x1="8.66" y1="5" x2="7" y2="8" stroke-width="0.8"/>
+        <line x1="8.66" y1="5" x2="6" y2="2" stroke-width="0.8"/>
+      </g>
+    </svg>`,
+    // 枝付き結晶
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-12 -12 24 24">
+      <g stroke="white" stroke-linecap="round">
+        <line x1="0" y1="-11" x2="0" y2="11" stroke-width="1.4"/>
+        <line x1="-9.5" y1="-5.5" x2="9.5" y2="5.5" stroke-width="1.4"/>
+        <line x1="-9.5" y1="5.5" x2="9.5" y2="-5.5" stroke-width="1.4"/>
+        <line x1="0" y1="-6" x2="-4" y2="-8" stroke-width="0.9"/>
+        <line x1="0" y1="-6" x2="4" y2="-8" stroke-width="0.9"/>
+        <line x1="0" y1="6" x2="-4" y2="8" stroke-width="0.9"/>
+        <line x1="0" y1="6" x2="4" y2="8" stroke-width="0.9"/>
+        <line x1="-5" y1="-3" x2="-7.5" y2="-7" stroke-width="0.9"/>
+        <line x1="-5" y1="-3" x2="-3" y2="-1" stroke-width="0.9"/>
+        <line x1="5" y1="3" x2="7.5" y2="7" stroke-width="0.9"/>
+        <line x1="5" y1="3" x2="3" y2="1" stroke-width="0.9"/>
+      </g>
+    </svg>`,
+    // シンプル細め
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-10 -10 20 20">
+      <g stroke="white" stroke-linecap="round" stroke-width="1">
+        <line x1="0" y1="-9" x2="0" y2="9"/>
+        <line x1="-7.8" y1="-4.5" x2="7.8" y2="4.5"/>
+        <line x1="-7.8" y1="4.5" x2="7.8" y2="-4.5"/>
+        <line x1="-2.5" y1="-5" x2="2.5" y2="-5" stroke-width="0.7"/>
+        <line x1="-2.5" y1="5" x2="2.5" y2="5" stroke-width="0.7"/>
+        <line x1="-6" y1="-1" x2="-6" y2="1" stroke-width="0.7"/>
+        <line x1="6" y1="-1" x2="6" y2="1" stroke-width="0.7"/>
+      </g>
+    </svg>`,
+    // 小さい丸付き
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-12 -12 24 24">
+      <g stroke="white" stroke-linecap="round">
+        <line x1="0" y1="-10" x2="0" y2="10" stroke-width="1.2"/>
+        <line x1="-8.66" y1="-5" x2="8.66" y2="5" stroke-width="1.2"/>
+        <line x1="-8.66" y1="5" x2="8.66" y2="-5" stroke-width="1.2"/>
+        <circle cx="0" cy="-10" r="1.5" fill="white" stroke="none"/>
+        <circle cx="0" cy="10" r="1.5" fill="white" stroke="none"/>
+        <circle cx="-8.66" cy="-5" r="1.5" fill="white" stroke="none"/>
+        <circle cx="8.66" cy="5" r="1.5" fill="white" stroke="none"/>
+        <circle cx="-8.66" cy="5" r="1.5" fill="white" stroke="none"/>
+        <circle cx="8.66" cy="-5" r="1.5" fill="white" stroke="none"/>
+        <circle cx="0" cy="0" r="2" fill="white" stroke="none"/>
+      </g>
+    </svg>`,
+  ];
 
-    const size = Math.random() * 5 + 2;
-    const duration = Math.random() * 8 + 6;
-    const delay = Math.random() * 10;
-    const drift = (Math.random() - 0.5) * 120; // 左右のゆらぎ幅
+  for(let i = 0; i < 50; i++){
+    const el = document.createElement("div");
+    el.className = "snowflake";
 
-    e.style.cssText = `
-      left: ${Math.random() * 100}vw;
-      width: ${size}px;
-      height: ${size}px;
-      opacity: ${Math.random() * 0.5 + 0.2};
-      animation-duration: ${duration}s;
-      animation-delay: -${delay}s;
-      --drift: ${drift}px;
+    const size     = Math.random() * 18 + 10;   // 10〜28px
+    const duration = Math.random() * 10 + 8;    // 8〜18秒
+    const delay    = Math.random() * 15;
+    const drift    = (Math.random() - 0.5) * 150;
+    const spin     = (Math.random() > 0.5 ? 1 : -1) * (Math.random() * 360 + 180) + "deg";
+    const shape    = crystals[Math.floor(Math.random() * crystals.length)];
+
+    el.style.cssText = `
+      left:${Math.random() * 100}vw;
+      width:${size}px;
+      height:${size}px;
+      animation-duration:${duration}s;
+      animation-delay:-${delay}s;
+      --drift:${drift}px;
+      --spin:${spin};
+      opacity:${Math.random() * 0.5 + 0.3};
     `;
-    s.appendChild(e);
+    el.innerHTML = shape;
+    container.appendChild(el);
   }
 }
 
 async function load(){
-  const res=await fetch(API);
-  const data=await res.json();
-  currentData=data;
+  // キャッシュがあれば即表示
+  const cached = localStorage.getItem("rsv_cache");
+  if(cached && !currentData.length){
+    currentData = JSON.parse(cached);
+    renderList(currentData);
+    updateAll();
+  }
 
-  // pending は candidates から時間帯のヒントを表示
- list.innerHTML = data.map(d => {
+  const res  = await fetch(API);
+  const data = await res.json();
+  currentData = data;
+  localStorage.setItem("rsv_cache", JSON.stringify(data));
+  renderList(data);
+  updateAll();
+  checkReady();
+}
+
+function renderList(data){
+  list.innerHTML = data.map(d => {
     let hint = "";
-    if(d.status === "pending" && d.candidates) {
+    if(d.status === "pending" && d.candidates){
       try {
-        const times = JSON.parse(d.candidates);
-        hint = `<div class="pending-hint">${times.join("  /  ")}</div>`;
-      } catch(e) {}
+        const ts = JSON.parse(d.candidates);
+        hint = `<div class="pending-hint">${ts.join("  /  ")}</div>`;
+      } catch(e){}
     }
     return `
     <div class="list-card ${d.type === "range" ? "range" : "single"}">
@@ -395,9 +494,6 @@ async function load(){
       <div>${d.name || ""}</div>
     </div>`;
   }).join("");
-
-  updateAll();
-  checkReady();
 }
 
 setInterval(load,3000);
