@@ -1,6 +1,15 @@
 <!DOCTYPE html>
 <html>
 <head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-K2MC9P9VF7"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-K2MC9P9VF7');
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
 *{box-sizing:border-box;}
@@ -196,7 +205,7 @@ button:active{transform:scale(0.95);}
 <!-- パスワード画面 -->
 <div id="pw-screen">
   <h2>🔒 管理者ページ</h2>
-  <input id="pw-input" type="password" placeholder="パスワードを入力" maxlength="20">
+  <input id="pw-input" type="password" placeholder="1232" maxlength="20">
   <div id="pw-error"></div>
   <button class="btn-primary" onclick="checkPassword()">ログイン</button>
 </div>
@@ -250,7 +259,7 @@ button:active{transform:scale(0.95);}
 
 <script>
 const API = "https://script.google.com/macros/s/AKfycbylkYrl4A2fYdCIdTZ2KDcXYrf-ihGeMIwHSUCAsBwnX_kVjgmox3cE1m5sgfvES4Hsdg/exec";
-const ADMIN_PW = "ここにパスワード"; // GAS側と同じパスワード
+const ADMIN_PW = "1232"; // GAS側と同じパスワード
 
 let password = "";
 let deleteTarget = null;
@@ -358,7 +367,11 @@ function closeModal(){
 
 async function executeDelete(){
   if(!deleteTarget) return;
+
+  // ★ closeModalの前にデータを退避
+  const target = deleteTarget;
   closeModal();
+
   showLoading("削除中...");
 
   const res = await fetch(API, {
@@ -367,9 +380,9 @@ async function executeDelete(){
       data: JSON.stringify({
         type:     "delete",
         password: password,
-        time:     deleteTarget.time,
-        name:     deleteTarget.name,
-        status:   deleteTarget.status
+        time:     target.time,
+        name:     target.name,
+        status:   target.status
       })
     })
   });
