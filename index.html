@@ -20,16 +20,9 @@ body::before{
   width:100%;height:100%;
   background:rgba(255,255,255,0.05);
   backdrop-filter:blur(3px);
-  z-index:0;
 }
 
-#snow{
-  position:fixed;
-  width:100%;height:100%;
-  pointer-events:none;
-  overflow:hidden;
-  z-index:1;
-}
+#snow{position:fixed;width:100%;height:100%;pointer-events:none;}
 
 .snowflake{
   position:absolute;
@@ -41,31 +34,92 @@ body::before{
 }
 
 @keyframes fall{
-  0%{transform:translateY(0) translateX(0);}
-  50%{transform:translateY(50vh) translateX(15px);}
-  100%{transform:translateY(110vh) translateX(-15px);}
+0%{transform:translateY(0);}
+100%{transform:translateY(110vh);}
 }
 
-.container{position:relative;z-index:2;}
+.container{position:relative;z-index:2;padding:10px;}
 
 h2{text-align:center;color:#e0f7fa;text-shadow:0 0 10px #00e5ff;}
 
-input,select,button{
-  padding:10px;margin:5px;width:95%;
-  border-radius:10px;border:none;
+.inputRow{
+  display:flex;
+  gap:5px;
 }
 
-button{background:#263238;color:white;}
-button:hover{background:#00e5ff;color:black;}
+.inputRow input{
+  flex:1;
+  padding:8px;
+}
+
+input,select,button{
+  margin:5px 0;
+  border-radius:10px;
+  border:none;
+}
+
+select,button{
+  padding:10px;
+  width:100%;
+}
+
+button{
+  background:#263238;
+  color:white;
+  transition:0.1s;
+}
+
+button:active{transform:scale(0.95);}
 button:disabled{background:#555;color:#aaa;}
+
+button.active{
+  background:#00e5ff;
+  color:black;
+}
 
 .card{
   background:rgba(0,0,0,0.5);
   border-radius:12px;
-  padding:10px;margin:8px;
+  padding:10px;
+  margin:8px 0;
+  transition:0.2s;
 }
 
-.toggle.active{background:#00e5ff;color:black;}
+/* 🔥 ホバー */
+.card:hover{
+  transform:scale(1.02);
+}
+
+/* 🔥 行レイアウト */
+.row{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  border-left:4px solid transparent;
+}
+
+/* 🌊 時間指定 */
+.single{
+  border-left-color:#4fc3f7;
+  background:rgba(79,195,247,0.08);
+}
+
+/* 🌌 範囲指定 */
+.range{
+  border-left-color:#9575cd;
+  background:rgba(149,117,205,0.08);
+}
+
+.time{
+  font-size:17px;
+  font-weight:bold;
+  color:#e0f7fa;
+}
+
+.name{
+  font-size:14px;
+  opacity:0.85;
+}
 
 .overlay{
 position:fixed;
@@ -89,19 +143,25 @@ z-index:9999;
 
 <h2>官職予約システム</h2>
 
-<input id="name" placeholder="名前">
+<div class="inputRow">
+  <input id="name" placeholder="名前">
+  <input id="accel" type="number" placeholder="加速(日)">
+</div>
+
 <select id="alliance"></select>
 
-<button id="toggleBtn" class="toggle">空きのみ表示：OFF</button>
+<button id="toggleBtn">空き枠のみ：OFF</button>
 
-<h3>通常予約</h3>
+<h3>時間指定予約</h3>
 <select id="time"></select>
 <button id="singleBtn">予約</button>
 
-<h3>範囲予約</h3>
-<select id="start"></select>
-<select id="end"></select>
-<button id="rangeBtn">範囲予約</button>
+<h3>範囲指定予約（最大2つ）</h3>
+
+<div class="card">① <select class="start"></select> 〜 <select class="end"></select></div>
+<div class="card">②（任意） <select class="start"></select> 〜 <select class="end"></select></div>
+
+<button id="rangeBtn">範囲指定予約</button>
 
 <div id="list"></div>
 
@@ -117,34 +177,22 @@ const API="https://script.google.com/macros/s/AKfycbylkYrl4A2fYdCIdTZ2KDcXYrf-ih
 let currentData=[];
 let showOnlyFree=false;
 
-// DOM
 const nameEl=document.getElementById("name");
+const accelEl=document.getElementById("accel");
 const allianceEl=document.getElementById("alliance");
 const timeEl=document.getElementById("time");
-const startEl=document.getElementById("start");
-const endEl=document.getElementById("end");
 const list=document.getElementById("list");
-const loading=document.getElementById("loading");
-const loadingText=document.getElementById("loadingText");
+
+const singleBtn=document.getElementById("singleBtn");
+const rangeBtn=document.getElementById("rangeBtn");
 const toggleBtn=document.getElementById("toggleBtn");
 
-// 同盟
-const alliances=["GNt","RAK","mNt","WNK","SBR","OMG","AAA","KOA","ANA","MOF","Gao","bTq","MPO","その他"];
-alliances.forEach(a=>allianceEl.add(new Option(a,a)));
+const startEls=document.querySelectorAll(".start");
+const endEls=document.querySelectorAll(".end");
 
-// ローディング
-function showLoading(v){
-loading.style.display=v?"flex":"none";
-loadingText.textContent="送信中...";
-loadingText.style.color="white";
-}
+["GNt","RAK","mNt","WNK","SBR","OMG","AAA","KOA","ANA","MOF","Gao","bTq","MPO","その他"]
+.forEach(a=>allianceEl.add(new Option(a,a)));
 
-function showSuccess(){
-loadingText.textContent="予約成功！";
-loadingText.style.color="#00e676";
-}
-
-// 時間生成
 function generateTimes(){
 let h=9,m=0,t=[];
 for(let i=0;i<48;i++){
@@ -155,68 +203,94 @@ return t;
 }
 const times=generateTimes();
 
-// 使用枠
-function getUsedSlots(){
-return currentData
-.filter(d=>d.time)
-.map(d=>d.time.split("-")[0]);
+function getUsed(){
+return currentData.map(d=>d.time);
 }
 
-// 通常枠更新
+function showLoading(v){
+loading.style.display=v?"flex":"none";
+loadingText.textContent="送信中...";
+singleBtn.disabled=v;
+rangeBtn.disabled=v;
+}
+
+function showSuccess(){
+loadingText.textContent="予約完了！";
+loadingText.style.color="#00e676";
+}
+
+toggleBtn.onclick=()=>{
+showOnlyFree=!showOnlyFree;
+toggleBtn.textContent="空き枠のみ："+(showOnlyFree?"ON":"OFF");
+toggleBtn.classList.toggle("active",showOnlyFree);
+updateAll();
+};
+
 function updateTimeOptions(){
-const used=getUsedSlots();
 timeEl.innerHTML="";
-
-times.forEach((v,i)=>{
-const slot=v+"-"+times[(i+1)%48];
-
+const used=getUsed();
+times.forEach(v=>{
 if(showOnlyFree && used.includes(v)) return;
-
-timeEl.add(new Option(slot.replace("-","〜"),slot));
+timeEl.add(new Option(v,v));
 });
 }
 
-// 範囲
-times.forEach(v=>startEl.add(new Option(v,v)));
+function updateRangeOptions(){
+const used=getUsed();
+startEls.forEach((s,i)=>{
+s.innerHTML="";
+times.forEach(t=>{
+if(showOnlyFree && used.includes(t)) return;
+s.add(new Option(t,t));
+});
+updateEnd(s,endEls[i]);
+});
+}
 
-function updateEnd(){
-endEl.innerHTML="";
-let idx=times.indexOf(startEl.value);
+function updateEnd(startSel,endSel){
+endSel.innerHTML="";
+let idx=times.indexOf(startSel.value);
 for(let i=idx+1;i<times.length;i++){
-endEl.add(new Option(times[i],times[i]));
+endSel.add(new Option(times[i],times[i]));
 }
 }
-startEl.onchange=updateEnd;
-updateEnd();
 
-// トグル
-toggleBtn.onclick=()=>{
-showOnlyFree=!showOnlyFree;
-toggleBtn.textContent="空きのみ表示："+(showOnlyFree?"ON":"OFF");
-toggleBtn.classList.toggle("active",showOnlyFree);
-updateTimeOptions();
-};
+startEls.forEach((s,i)=>{
+s.onchange=()=>updateEnd(s,endEls[i]);
+});
 
-// ===== 通常予約 =====
-document.getElementById("singleBtn").onclick=async ()=>{
+// 単発
+singleBtn.onclick=async ()=>{
+if(!nameEl.value.trim()){alert("名前入力");return;}
+if(!accelEl.value || accelEl.value<=0){alert("加速入力");return;}
 
-if(currentData.some(d=>d.time===timeEl.value)){
-  alert("満席");
-  return;
+if(getUsed().includes(timeEl.value)){
+alert("この時間は埋まっています");
+return;
 }
 
 showLoading(true);
 
-await fetch(API,{
+const res = await fetch(API,{
 method:"POST",
-mode:"no-cors",
-body:JSON.stringify({
+body:new URLSearchParams({
+data:JSON.stringify({
 type:"single",
 time:timeEl.value,
 name:nameEl.value,
-alliance:allianceEl.value
+alliance:allianceEl.value,
+accel:accelEl.value
+})
 })
 });
+
+const text = await res.text();
+
+if(text!=="ok"){
+showLoading(false);
+alert("予約失敗");
+return;
+}
 
 showSuccess();
 
@@ -226,45 +300,61 @@ load();
 },1500);
 };
 
-// ===== 範囲予約 =====
-document.getElementById("rangeBtn").onclick=async ()=>{
+// 範囲
+rangeBtn.onclick=async ()=>{
+if(!nameEl.value.trim()){alert("名前入力");return;}
+if(!accelEl.value || accelEl.value<=0){alert("加速入力");return;}
 
-const startIdx=times.indexOf(startEl.value);
-const endIdx=times.indexOf(endEl.value);
-
-if(startIdx>=endIdx){
-  alert("有効な時間を選択してください");
-  return;
+let ranges=[];
+startEls.forEach((s,i)=>{
+if(s.value && endEls[i].value){
+ranges.push({start:s.value,end:endEls[i].value});
 }
+});
 
-const used=getUsedSlots();
+if(ranges.length===0){alert("選択して");return;}
+
+const used=getUsed();
 let hasFree=false;
 
-for(let i=startIdx;i<endIdx;i++){
+for(const r of ranges){
+const s=times.indexOf(r.start);
+const e=times.indexOf(r.end);
+for(let i=s;i<e;i++){
 if(!used.includes(times[i])){
-  hasFree=true;
-  break;
+hasFree=true;
+break;
+}
 }
 }
 
 if(!hasFree){
-  alert("空き枠がありません");
-  return;
+alert("空き枠がありません");
+return;
 }
 
 showLoading(true);
 
-await fetch(API,{
+const res = await fetch(API,{
 method:"POST",
-mode:"no-cors",
-body:JSON.stringify({
+body:new URLSearchParams({
+data:JSON.stringify({
 type:"range",
-start:startEl.value,
-end:endEl.value,
+ranges:ranges,
 name:nameEl.value,
-alliance:allianceEl.value
+alliance:allianceEl.value,
+accel:accelEl.value
+})
 })
 });
+
+const text = await res.text();
+
+if(text!=="ok"){
+showLoading(false);
+alert("予約失敗");
+return;
+}
 
 showSuccess();
 
@@ -274,49 +364,43 @@ load();
 },1500);
 };
 
-// ===== 表示（🔥ソート追加）=====
 async function load(){
 const res=await fetch(API);
 const data=await res.json();
-
-// 🔥 時間順ソート
-data.sort((a,b)=>{
-  const ta = a.time ? a.time.split("-")[0] : a.start;
-  const tb = b.time ? b.time.split("-")[0] : b.start;
-  return times.indexOf(ta) - times.indexOf(tb);
-});
-
 currentData=data;
 
 list.innerHTML=data.map(d=>{
-let txt=d.time
-  ? d.time.replace("-","〜")
-  : `${d.start}〜${d.end}`;
-
-return `<div class="card">${txt} ${d.name||""}</div>`;
+const typeClass = d.type==="range"?"range":"single";
+return `
+<div class="card row ${typeClass}">
+  <div class="time">${d.time||"調整中"}</div>
+  <div class="name">${d.name||""}</div>
+</div>
+`;
 }).join("");
 
-updateTimeOptions();
+updateAll();
 }
 
-// ❄️ 雪
+function updateAll(){
+updateTimeOptions();
+updateRangeOptions();
+}
+
 function createSnow(){
 const s=document.getElementById("snow");
-for(let i=0;i<50;i++){
+for(let i=0;i<40;i++){
 let e=document.createElement("div");
 e.className="snowflake";
 e.style.left=Math.random()*100+"vw";
 e.style.width=e.style.height=(Math.random()*4+2)+"px";
 e.style.animationDuration=(Math.random()*5+5)+"s";
-e.style.opacity=Math.random();
 s.appendChild(e);
 }
 }
 
-// 初期化
 createSnow();
 load();
-
 </script>
 </body>
 </html>
