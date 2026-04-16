@@ -39,7 +39,7 @@ body::before{
 100%{transform:translateY(110vh);}
 }
 
-/* 🔥 ロゴ（存在感＋ぼかし） */
+/* 🔥 ロゴ（影＋光で自然化） */
 .logo{
   position:absolute;
   top:10px;
@@ -49,6 +49,7 @@ body::before{
   opacity:0.9;
 
   filter:
+    drop-shadow(0 4px 6px rgba(0,0,0,0.4))
     drop-shadow(0 0 10px rgba(0,200,255,0.5))
     drop-shadow(0 0 20px rgba(255,255,255,0.2));
 
@@ -169,8 +170,6 @@ z-index:9999;
 <body>
 
 <div id="snow"></div>
-
-<!-- 🔥 ロゴ -->
 <img src="unnamed.png" class="logo">
 
 <div class="container">
@@ -197,7 +196,6 @@ z-index:9999;
 
 <button id="rangeBtn">範囲指定予約</button>
 
-<!-- 🔥 追加：予約リスト見出し -->
 <h3 class="listTitle">予約リスト</h3>
 <div id="list"></div>
 
@@ -263,24 +261,42 @@ toggleBtn.classList.toggle("active",showOnlyFree);
 updateAll();
 };
 
+// 🔥 修正：選択保持
 function updateTimeOptions(){
+const selected = timeEl.value;
+
 timeEl.innerHTML="";
 const used=getUsed();
+
 times.forEach(v=>{
 if(showOnlyFree && used.includes(v)) return;
 timeEl.add(new Option(v,v));
 });
+
+if(selected) timeEl.value = selected;
 }
 
+// 🔥 修正：範囲も保持
 function updateRangeOptions(){
 const used=getUsed();
+
 startEls.forEach((s,i)=>{
-s.innerHTML="";
-times.forEach(t=>{
-if(showOnlyFree && used.includes(t)) return;
-s.add(new Option(t,t));
-});
-updateEnd(s,endEls[i]);
+
+  const selectedStart = s.value;
+  const selectedEnd = endEls[i].value;
+
+  s.innerHTML="";
+
+  times.forEach(t=>{
+    if(showOnlyFree && used.includes(t)) return;
+    s.add(new Option(t,t));
+  });
+
+  if(selectedStart) s.value = selectedStart;
+
+  updateEnd(s,endEls[i]);
+
+  if(selectedEnd) endEls[i].value = selectedEnd;
 });
 }
 
@@ -296,6 +312,7 @@ startEls.forEach((s,i)=>{
 s.onchange=()=>updateEnd(s,endEls[i]);
 });
 
+// 単発
 singleBtn.onclick=async ()=>{
 if(!nameEl.value.trim()){alert("名前入力");return;}
 if(!accelEl.value || accelEl.value<=0){alert("加速入力");return;}
@@ -336,6 +353,7 @@ load();
 },1500);
 };
 
+// 範囲
 rangeBtn.onclick=async ()=>{
 if(!nameEl.value.trim()){alert("名前入力");return;}
 if(!accelEl.value || accelEl.value<=0){alert("加速入力");return;}
