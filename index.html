@@ -33,7 +33,7 @@ body::before{
   100%{transform:translateY(110vh);}
 }
 
-/* ロゴ：小さく・背景になじむ */
+/* ロゴ */
 .logo{
   position:absolute;
   top:10px;
@@ -41,11 +41,10 @@ body::before{
   width:42px;
   z-index:2;
   opacity:0.3;
-  filter:
-    drop-shadow(0 2px 4px rgba(0,0,0,0.3))
-    brightness(1.2);
+  filter:brightness(1.2) drop-shadow(0 2px 4px rgba(0,0,0,0.3));
   pointer-events:none;
 }
+
 
 .container{position:relative;z-index:3;padding:10px;}
 
@@ -95,16 +94,16 @@ button{
   transition:0.2s;
   cursor:pointer;
 }
-button:active{transform:scale(0.95);}
+/* ボタンの光を抑える */
 button.ready{
   background:#00e5ff;
   color:black;
-  box-shadow:0 0 10px #00e5ff;
+  box-shadow:0 0 6px rgba(0,229,255,0.4);  /* 弱めに */
 }
 button.active{
   background:#00e5ff;
   color:black;
-  box-shadow:0 0 10px #00e5ff, 0 0 20px rgba(0,229,255,0.6);
+  box-shadow:0 0 8px rgba(0,229,255,0.5);  /* 弱めに */
 }
 
 /* カード：全セクション共通 */
@@ -311,17 +310,31 @@ function showSuccess(){
   loading.style.color="#00e676";
 }
 
-singleBtn.onclick=async()=>{
+singleBtn.onclick = async () => {
   if(!singleBtn.classList.contains("ready")) return;
+
+  if(getUsed().includes(timeEl.value)){
+    alert(`${timeEl.value} はすでに埋まっています`);
+    load();
+    return;
+  }
+
   showLoading(true);
-  const res=await fetch(API,{method:"POST",body:new URLSearchParams({data:JSON.stringify({
-    type:"single",time:timeEl.value,
-    name:nameEl.value,alliance:allianceEl.value,accel:accelEl.value
+  const res = await fetch(API, {method:"POST", body: new URLSearchParams({data: JSON.stringify({
+    type:"single", time:timeEl.value,
+    name:nameEl.value, alliance:allianceEl.value, accel:accelEl.value
   })})});
-  const text=await res.text();
-  if(text!=="ok"){showLoading(false);alert("予約失敗");return;}
+  const text = await res.text();
+
+  if(text === "duplicate"){
+    showLoading(false);
+    alert(`${timeEl.value} はすでに埋まっています`);
+    load();
+    return;
+  }
+  if(text !== "ok"){showLoading(false); alert("予約失敗"); return;}
   showSuccess();
-  setTimeout(()=>{showLoading(false);load();},1200);
+  setTimeout(()=>{showLoading(false); load();}, 1200);
 };
 
 rangeBtn.onclick=async()=>{
@@ -359,17 +372,21 @@ async function load(){
   currentData=data;
 
   // pending は candidates から時間帯のヒントを表示
-  list.innerHTML=data.map(d=>{
-    const hint = d.status==="pending" && d.candidates
-      ? `<div class="pending-hint">${JSON.parse(d.candidates).join(" / ")}</div>`
-      : "";
+ list.innerHTML = data.map(d => {
+    let hint = "";
+    if(d.status === "pending" && d.candidates) {
+      try {
+        const times = JSON.parse(d.candidates);
+        hint = `<div class="pending-hint">${times.join("  /  ")}</div>`;
+      } catch(e) {}
+    }
     return `
-    <div class="list-card ${d.type==="range"?"range":"single"}">
+    <div class="list-card ${d.type === "range" ? "range" : "single"}">
       <div>
-        <div class="time">${d.time||"調整中"}</div>
+        <div class="time">${d.time || "調整中"}</div>
         ${hint}
       </div>
-      <div>${d.name||""}</div>
+      <div>${d.name || ""}</div>
     </div>`;
   }).join("");
 
