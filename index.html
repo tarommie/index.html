@@ -2,7 +2,6 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-
 <style>
 body{
   margin:0;
@@ -30,76 +29,112 @@ body::before{
   animation:fall linear infinite;
 }
 @keyframes fall{
-0%{transform:translateY(0);}
-100%{transform:translateY(110vh);}
+  0%{transform:translateY(0);}
+  100%{transform:translateY(110vh);}
 }
 
+/* ロゴ：小さく・背景になじむ */
 .logo{
-  ...
-  opacity:0.35;
+  position:absolute;
+  top:10px;
+  left:10px;
+  width:42px;
+  z-index:2;
+  opacity:0.3;
   filter:
     drop-shadow(0 2px 4px rgba(0,0,0,0.3))
-    brightness(1.1);
+    brightness(1.2);
+  pointer-events:none;
 }
 
 .container{position:relative;z-index:3;padding:10px;}
 
-h2{text-align:center;color:#e0f7fa;text-shadow:0 1px 4px rgba(0,0,0,0.4);}
+h2{
+  text-align:center;
+  color:#e0f7fa;
+  text-shadow:0 1px 4px rgba(0,0,0,0.4);
+}
 
-.inputRow{display:flex;gap:5px;}
-.inputRow input{flex:1;padding:8px;}
+h3{
+  margin:12px 0 4px;
+  font-size:14px;
+  color:#90caf9;
+  letter-spacing:0.5px;
+}
 
-input,select,button{margin:5px 0;border-radius:10px;border:none;}
-
-select,button{
-  padding:10px;
+/* input / select 共通：ダークテーマに合わせる */
+input, select{
+  background:rgba(255,255,255,0.08);
+  color:white;
+  border:1px solid rgba(255,255,255,0.15);
+  border-radius:10px;
+  padding:8px 10px;
+  margin:4px 0;
   width:100%;
+  box-sizing:border-box;
+  font-family:"Trebuchet MS",sans-serif;
+  font-size:14px;
+}
+input::placeholder{color:rgba(255,255,255,0.4);}
+select option{background:#1c3140;color:white;}
+input:focus, select:focus{
+  outline:none;
+  border-color:rgba(0,229,255,0.5);
 }
 
 button{
-  background:#263238;
-  color:white;
-  transition:0.2s;
-}
-
-button:active{
-  transform:scale(0.95);
-}
-
-button:not(.ready){
+  padding:10px;
+  width:100%;
+  border:none;
+  border-radius:10px;
   background:#555;
   color:#aaa;
+  margin:5px 0;
+  font-family:"Trebuchet MS",sans-serif;
+  font-size:14px;
+  transition:0.2s;
+  cursor:pointer;
 }
-
+button:active{transform:scale(0.95);}
 button.ready{
   background:#00e5ff;
   color:black;
   box-shadow:0 0 10px #00e5ff;
 }
-
-/* ★トグルON */
 button.active{
   background:#00e5ff;
   color:black;
   box-shadow:0 0 10px #00e5ff, 0 0 20px rgba(0,229,255,0.6);
 }
 
+/* カード：全セクション共通 */
 .card{
-  background:rgba(0,0,0,0.5);
+  background:rgba(0,0,0,0.4);
+  border:1px solid rgba(255,255,255,0.08);
   border-radius:12px;
-  padding:10px;
-  margin:8px 0;
+  padding:10px 12px;
+  margin:6px 0;
 }
+.card input, .card select{margin:4px 0;}
 
-.row{
+.inputRow{display:flex;gap:8px;}
+.inputRow input{flex:1;}
+
+/* 予約リスト */
+.list-card{
+  background:rgba(0,0,0,0.4);
+  border:1px solid rgba(255,255,255,0.08);
+  border-radius:12px;
+  padding:10px 14px;
+  margin:6px 0;
   display:flex;
   justify-content:space-between;
+  align-items:center;
 }
-
-.single{border-left:4px solid #4fc3f7;}
-.range{border-left:4px solid #9575cd;}
-
-.time{font-weight:bold;}
+.list-card.single{border-left:4px solid #4fc3f7;}
+.list-card.range{border-left:4px solid #9575cd;}
+.time{font-weight:bold;font-size:15px;}
+.pending-hint{font-size:11px;color:rgba(255,255,255,0.35);margin-top:2px;}
 
 .overlay{
   position:fixed;
@@ -111,24 +146,12 @@ button.active{
   background:rgba(0,0,0,0.85);
   color:white;
   font-size:22px;
-  z-index:9999; /* ★最前面 */
-  animation:fadeIn 0.2s;
   z-index:9999;
+  animation:fadeIn 0.2s;
 }
-
-@keyframes fadeIn{
-  from{opacity:0;}
-  to{opacity:1;}
-  
-}
-button.active{
-  background:#00e5ff;
-  color:black;
-  box-shadow:0 0 10px #00e5ff, 0 0 20px rgba(0,229,255,0.6);
-}
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
 </style>
 </head>
-
 <body>
 
 <div id="snow"></div>
@@ -138,36 +161,33 @@ button.active{
 
 <h2>2743官職予約</h2>
 
-<div class="inputRow">
-  <input id="name" placeholder="名前">
-  <input id="accel" type="number" placeholder="加速(日)">
+<!-- 入力欄をカードで囲む -->
+<div class="card">
+  <div class="inputRow">
+    <input id="name" placeholder="名前">
+    <input id="accel" type="number" placeholder="加速(日)" style="max-width:100px">
+  </div>
+  <select id="alliance"></select>
 </div>
-
-<select id="alliance"></select>
 
 <button id="toggleBtn">空き枠のみ表示：OFF</button>
 
 <h3>時間指定予約</h3>
-<select id="time"></select>
-<button id="singleBtn">予約</button>
+<div class="card">
+  <select id="time"></select>
+  <button id="singleBtn">予約</button>
+</div>
 
 <h3>範囲指定予約（最大2つ）</h3>
-
 <div class="card">
-① <select class="start"></select> 〜 <select class="end"></select>
+  ① <select class="start"></select> 〜 <select class="end"></select>
 </div>
-
 <div class="card">
-②（任意）
-<select class="start">
-<option value="">未選択</option>
-</select>
-〜
-<select class="end">
-<option value="">未選択</option>
-</select>
+  ②（任意）
+  <select class="start"><option value="">未選択</option></select>
+  〜
+  <select class="end"><option value="">未選択</option></select>
 </div>
-
 <button id="rangeBtn">範囲指定予約</button>
 
 <h3>予約リスト</h3>
@@ -189,246 +209,183 @@ const allianceEl=document.getElementById("alliance");
 const timeEl=document.getElementById("time");
 const list=document.getElementById("list");
 const loading=document.getElementById("loading");
-
 const singleBtn=document.getElementById("singleBtn");
 const rangeBtn=document.getElementById("rangeBtn");
 const toggleBtn=document.getElementById("toggleBtn");
-
 const startEls=document.querySelectorAll(".start");
 const endEls=document.querySelectorAll(".end");
+
+// 名前・加速をlocalStorageで保持
+if(localStorage.getItem("rsv_name")) nameEl.value=localStorage.getItem("rsv_name");
+if(localStorage.getItem("rsv_accel")) accelEl.value=localStorage.getItem("rsv_accel");
+nameEl.oninput=()=>localStorage.setItem("rsv_name",nameEl.value);
+accelEl.oninput=()=>localStorage.setItem("rsv_accel",accelEl.value);
 
 ["GNt","RAK","mNt","WNK","SBR","OMG","AAA","KOA","ANA","MOF","Gao","bTq","MPO","その他"]
 .forEach(a=>allianceEl.add(new Option(a,a)));
 
 function generateTimes(){
-let h=9,m=0,t=[];
-for(let i=0;i<48;i++){
-t.push(("0"+h).slice(-2)+":"+("0"+m).slice(-2));
-m+=30;if(m>=60){m=0;h++}if(h>=24)h-=24;
-}
-return t;
+  let h=9,m=0,t=[];
+  for(let i=0;i<48;i++){
+    t.push(("0"+h).slice(-2)+":"+("0"+m).slice(-2));
+    m+=30;if(m>=60){m=0;h++;}if(h>=24)h-=24;
+  }
+  return t;
 }
 const times=generateTimes();
+function getUsed(){return currentData.map(d=>d.time);}
 
-function getUsed(){
-return currentData.map(d=>d.time);
-}
-
-/* ===== トグル ===== */
-toggleBtn.onclick = ()=>{
-showOnlyFree=!showOnlyFree;
-
-toggleBtn.textContent="空き枠のみ表示："+(showOnlyFree?"ON":"OFF");
-
-// ★これ追加（光る）
-toggleBtn.classList.toggle("active", showOnlyFree);
-
-// ★これ重要（まとめて更新）
-updateAll();
+toggleBtn.onclick=()=>{
+  showOnlyFree=!showOnlyFree;
+  toggleBtn.textContent="空き枠のみ表示："+(showOnlyFree?"ON":"OFF");
+  toggleBtn.classList.toggle("active",showOnlyFree);
+  updateAll();
 };
-/* ===== 時間保持 ===== */
+
 function updateTimeOptions(){
-const selected = timeEl.value;
-timeEl.innerHTML="";
-const used=getUsed();
-
-times.forEach(v=>{
-if(showOnlyFree && used.includes(v)) return;
-timeEl.add(new Option(v,v));
-});
-
-if(selected) timeEl.value = selected;
+  const selected=timeEl.value;
+  timeEl.innerHTML="";
+  const used=getUsed();
+  times.forEach(v=>{
+    if(showOnlyFree && used.includes(v)) return;
+    timeEl.add(new Option(v,v));
+  });
+  if(selected) timeEl.value=selected;
 }
 
-/* ===== 範囲 ===== */
 function updateRangeOptions(){
-const used=getUsed();
-
-startEls.forEach((s,i)=>{
-  const selectedStart = s.value;
-  const selectedEnd = endEls[i].value;
-
-  s.innerHTML="";
-
-  if(i===1){
-    s.add(new Option("未選択",""));
-  }
-
-  times.forEach(t=>{
-    if(showOnlyFree && used.includes(t)) return;
-    s.add(new Option(t,t));
+  const used=getUsed();
+  startEls.forEach((s,i)=>{
+    const selS=s.value, selE=endEls[i].value;
+    s.innerHTML="";
+    if(i===1) s.add(new Option("未選択",""));
+    times.forEach(t=>{
+      if(showOnlyFree && used.includes(t)) return;
+      s.add(new Option(t,t));
+    });
+    if(selS) s.value=selS;
+    updateEnd(s,endEls[i]);
+    if(selE) endEls[i].value=selE;
   });
-
-  if(selectedStart) s.value = selectedStart;
-
-  updateEnd(s,endEls[i]);
-
-  if(selectedEnd) endEls[i].value = selectedEnd;
-});
 }
 
 function updateEnd(startSel,endSel){
-if(!startSel.value){
-endSel.innerHTML="";
-endSel.add(new Option("未選択",""));
-return;
-}
-endSel.innerHTML="";
-let idx=times.indexOf(startSel.value);
-for(let i=idx+1;i<times.length;i++){
-endSel.add(new Option(times[i],times[i]));
-}
+  if(!startSel.value){
+    endSel.innerHTML="";
+    endSel.add(new Option("未選択",""));
+    return;
+  }
+  endSel.innerHTML="";
+  let idx=times.indexOf(startSel.value);
+  for(let i=idx+1;i<times.length;i++) endSel.add(new Option(times[i],times[i]));
 }
 
-/* ===== ボタン状態 ===== */
 function checkReady(){
-const used=getUsed();
-
-singleBtn.classList.toggle("ready",
-  nameEl.value.trim() &&
-  accelEl.value>0 &&
-  timeEl.value &&
-  !used.includes(timeEl.value)
-);
-
-let hasRange=false,hasFree=false;
-
-startEls.forEach((s,i)=>{
-if(s.value && endEls[i].value){
-hasRange=true;
-const sIdx=times.indexOf(s.value);
-const eIdx=times.indexOf(endEls[i].value);
-for(let j=sIdx;j<eIdx;j++){
-if(!used.includes(times[j])){
-hasFree=true;break;
-}
-}
-}
-});
-
-rangeBtn.classList.toggle("ready",
-  nameEl.value.trim() &&
-  accelEl.value>0 &&
-  hasRange && hasFree
-);
+  const used=getUsed();
+  singleBtn.classList.toggle("ready",
+    nameEl.value.trim() && accelEl.value>0 &&
+    timeEl.value && !used.includes(timeEl.value)
+  );
+  let hasRange=false, hasFree=false;
+  startEls.forEach((s,i)=>{
+    if(s.value && endEls[i].value){
+      hasRange=true;
+      const sIdx=times.indexOf(s.value), eIdx=times.indexOf(endEls[i].value);
+      for(let j=sIdx;j<eIdx;j++){
+        if(!used.includes(times[j])){hasFree=true;break;}
+      }
+    }
+  });
+  rangeBtn.classList.toggle("ready",
+    nameEl.value.trim() && accelEl.value>0 && hasRange && hasFree
+  );
 }
 
-/* ===== 演出 ===== */
 function showLoading(v){
-loading.style.display=v?"flex":"none";
-loading.innerText="送信中...";
-loading.style.color="white";
+  loading.style.display=v?"flex":"none";
+  loading.innerText="送信中...";
+  loading.style.color="white";
 }
-
 function showSuccess(){
-loading.innerText="予約完了！";
-loading.style.color="#00e676";
+  loading.innerText="予約完了！";
+  loading.style.color="#00e676";
 }
 
-/* ===== 予約処理 ===== */
-singleBtn.onclick=async ()=>{
-if(!singleBtn.classList.contains("ready")) return;
-
-showLoading(true);
-
-const res=await fetch(API,{
-method:"POST",
-body:new URLSearchParams({
-data:JSON.stringify({
-type:"single",
-time:timeEl.value,
-name:nameEl.value,
-alliance:allianceEl.value,
-accel:accelEl.value
-})
-})
-});
-
-const text=await res.text();
-console.log("レスポンス:", text);
-
-if(text!=="ok"){
-showLoading(false);alert("予約失敗");return;
-}
-
-showSuccess();
-setTimeout(()=>{showLoading(false);load();},1200);
+singleBtn.onclick=async()=>{
+  if(!singleBtn.classList.contains("ready")) return;
+  showLoading(true);
+  const res=await fetch(API,{method:"POST",body:new URLSearchParams({data:JSON.stringify({
+    type:"single",time:timeEl.value,
+    name:nameEl.value,alliance:allianceEl.value,accel:accelEl.value
+  })})});
+  const text=await res.text();
+  if(text!=="ok"){showLoading(false);alert("予約失敗");return;}
+  showSuccess();
+  setTimeout(()=>{showLoading(false);load();},1200);
 };
 
-rangeBtn.onclick=async ()=>{
-if(!rangeBtn.classList.contains("ready")) return;
-
-let ranges=[];
-startEls.forEach((s,i)=>{
-if(s.value && endEls[i].value){
-ranges.push({start:s.value,end:endEls[i].value});
-}
-});
-
-showLoading(true);
-
-const res=await fetch(API,{
-method:"POST",
-body:new URLSearchParams({
-data:JSON.stringify({
-type:"range",
-ranges:ranges,
-name:nameEl.value,
-alliance:allianceEl.value,
-accel:accelEl.value
-})
-})
-});
-
-const text=await res.text();
-
-if(text!=="ok"){
-showLoading(false);alert("予約失敗");return;
-}
-
-showSuccess();
-setTimeout(()=>{showLoading(false);load();},1200);
+rangeBtn.onclick=async()=>{
+  if(!rangeBtn.classList.contains("ready")) return;
+  let ranges=[];
+  startEls.forEach((s,i)=>{
+    if(s.value && endEls[i].value) ranges.push({start:s.value,end:endEls[i].value});
+  });
+  showLoading(true);
+  const res=await fetch(API,{method:"POST",body:new URLSearchParams({data:JSON.stringify({
+    type:"range",ranges,
+    name:nameEl.value,alliance:allianceEl.value,accel:accelEl.value
+  })})});
+  const text=await res.text();
+  if(text!=="ok"){showLoading(false);alert("予約失敗");return;}
+  showSuccess();
+  setTimeout(()=>{showLoading(false);load();},1200);
 };
 
-/* ===== 雪 ===== */
 function createSnow(){
-const s=document.getElementById("snow");
-for(let i=0;i<40;i++){
-let e=document.createElement("div");
-e.className="snowflake";
-e.style.left=Math.random()*100+"vw";
-e.style.width=e.style.height=(Math.random()*4+2)+"px";
-e.style.animationDuration=(Math.random()*5+5)+"s";
-s.appendChild(e);
-}
+  const s=document.getElementById("snow");
+  for(let i=0;i<40;i++){
+    let e=document.createElement("div");
+    e.className="snowflake";
+    e.style.left=Math.random()*100+"vw";
+    e.style.width=e.style.height=(Math.random()*4+2)+"px";
+    e.style.animationDuration=(Math.random()*5+5)+"s";
+    s.appendChild(e);
+  }
 }
 
-/* ===== load ===== */
 async function load(){
-const res=await fetch(API);
-const data=await res.json();
-currentData=data;
+  const res=await fetch(API);
+  const data=await res.json();
+  currentData=data;
 
-list.innerHTML=data.map(d=>`
-<div class="card row ${d.type==="range"?"range":"single"}">
-<div class="time">${d.time||"調整中"}</div>
-<div>${d.name||""}</div>
-</div>`).join("");
+  // pending は candidates から時間帯のヒントを表示
+  list.innerHTML=data.map(d=>{
+    const hint = d.status==="pending" && d.candidates
+      ? `<div class="pending-hint">${JSON.parse(d.candidates).join(" / ")}</div>`
+      : "";
+    return `
+    <div class="list-card ${d.type==="range"?"range":"single"}">
+      <div>
+        <div class="time">${d.time||"調整中"}</div>
+        ${hint}
+      </div>
+      <div>${d.name||""}</div>
+    </div>`;
+  }).join("");
 
-updateAll();
-checkReady();
+  updateAll();
+  checkReady();
 }
 
 setInterval(load,3000);
 setInterval(checkReady,300);
-
 createSnow();
 load();
+
 function updateAll(){
   updateTimeOptions();
   updateRangeOptions();
 }
 </script>
-
 </body>
 </html>
