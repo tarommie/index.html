@@ -39,17 +39,18 @@ body::before{
 100%{transform:translateY(110vh);}
 }
 
-/* 🔥 ロゴ（なじませ版） */
+/* 🔥 ロゴ（存在感＋ぼかし） */
 .logo{
-  position:absolute; /* ← スクロールで流れる */
+  position:absolute;
   top:10px;
   left:10px;
-  width:70px;
+  width:75px;
   z-index:1;
+  opacity:0.9;
 
-  opacity:0.7;
-  filter:brightness(0.9) saturate(0.8);
-  mix-blend-mode:screen; /* ← 透明感 */
+  filter:
+    drop-shadow(0 0 10px rgba(0,200,255,0.5))
+    drop-shadow(0 0 20px rgba(255,255,255,0.2));
 
   pointer-events:none;
 }
@@ -133,6 +134,24 @@ button.active{
   opacity:0.85;
 }
 
+/* 🔥 予約リスト見出し */
+.listTitle{
+  text-align:center;
+  margin-top:20px;
+  color:#b0bec5;
+  letter-spacing:1px;
+  font-size:16px;
+}
+
+.listTitle::after{
+  content:"";
+  display:block;
+  width:60%;
+  margin:5px auto;
+  height:1px;
+  background:rgba(255,255,255,0.2);
+}
+
 .overlay{
 position:fixed;
 top:0;left:0;
@@ -178,6 +197,8 @@ z-index:9999;
 
 <button id="rangeBtn">範囲指定予約</button>
 
+<!-- 🔥 追加：予約リスト見出し -->
+<h3 class="listTitle">予約リスト</h3>
 <div id="list"></div>
 
 </div>
@@ -275,7 +296,6 @@ startEls.forEach((s,i)=>{
 s.onchange=()=>updateEnd(s,endEls[i]);
 });
 
-// 単発
 singleBtn.onclick=async ()=>{
 if(!nameEl.value.trim()){alert("名前入力");return;}
 if(!accelEl.value || accelEl.value<=0){alert("加速入力");return;}
@@ -316,7 +336,6 @@ load();
 },1500);
 };
 
-// 範囲
 rangeBtn.onclick=async ()=>{
 if(!nameEl.value.trim()){alert("名前入力");return;}
 if(!accelEl.value || accelEl.value<=0){alert("加速入力");return;}
