@@ -12,9 +12,7 @@ body{
     radial-gradient(circle at 20% 30%, rgba(255,255,255,0.15), transparent 40%),
     radial-gradient(circle at 80% 70%, rgba(0,200,255,0.1), transparent 40%),
     linear-gradient(135deg,#0f2027,#203a43,#2c5364);
-  transition:0.2s;
 }
-
 body::before{
   content:"";
   position:fixed;
@@ -22,9 +20,7 @@ body::before{
   background:rgba(255,255,255,0.05);
   backdrop-filter:blur(3px);
 }
-
 #snow{position:fixed;width:100%;height:100%;pointer-events:none;}
-
 .snowflake{
   position:absolute;
   top:-10px;
@@ -33,48 +29,27 @@ body::before{
   opacity:0.8;
   animation:fall linear infinite;
 }
-
 @keyframes fall{
 0%{transform:translateY(0);}
 100%{transform:translateY(110vh);}
 }
 
-/* 🔥 ロゴ（影＋光で自然化） */
 .logo{
-  position:absolute;
-  top:10px;
-  left:10px;
-  width:75px;
-  z-index:1;
-  opacity:0.9;
-
+  ...
+  opacity:0.35;
   filter:
-    drop-shadow(0 4px 6px rgba(0,0,0,0.4))
-    drop-shadow(0 0 10px rgba(0,200,255,0.5))
-    drop-shadow(0 0 20px rgba(255,255,255,0.2));
-
-  pointer-events:none;
+    drop-shadow(0 2px 4px rgba(0,0,0,0.3))
+    brightness(1.1);
 }
 
-.container{position:relative;z-index:2;padding:10px;}
+.container{position:relative;z-index:3;padding:10px;}
 
-h2{text-align:center;color:#e0f7fa;text-shadow:0 0 10px #00e5ff;}
+h2{text-align:center;color:#e0f7fa;text-shadow:0 1px 4px rgba(0,0,0,0.4);}
 
-.inputRow{
-  display:flex;
-  gap:5px;
-}
+.inputRow{display:flex;gap:5px;}
+.inputRow input{flex:1;padding:8px;}
 
-.inputRow input{
-  flex:1;
-  padding:8px;
-}
-
-input,select,button{
-  margin:5px 0;
-  border-radius:10px;
-  border:none;
-}
+input,select,button{margin:5px 0;border-radius:10px;border:none;}
 
 select,button{
   padding:10px;
@@ -84,15 +59,29 @@ select,button{
 button{
   background:#263238;
   color:white;
-  transition:0.1s;
+  transition:0.2s;
 }
 
-button:active{transform:scale(0.95);}
-button:disabled{background:#555;color:#aaa;}
+button:active{
+  transform:scale(0.95);
+}
 
+button:not(.ready){
+  background:#555;
+  color:#aaa;
+}
+
+button.ready{
+  background:#00e5ff;
+  color:black;
+  box-shadow:0 0 10px #00e5ff;
+}
+
+/* ★トグルON */
 button.active{
   background:#00e5ff;
   color:black;
+  box-shadow:0 0 10px #00e5ff, 0 0 20px rgba(0,229,255,0.6);
 }
 
 .card{
@@ -100,69 +89,42 @@ button.active{
   border-radius:12px;
   padding:10px;
   margin:8px 0;
-  transition:0.2s;
-}
-
-.card:hover{
-  transform:scale(1.02);
 }
 
 .row{
   display:flex;
   justify-content:space-between;
-  align-items:center;
-  border-left:4px solid transparent;
 }
 
-.single{
-  border-left-color:#4fc3f7;
-  background:rgba(79,195,247,0.08);
-}
+.single{border-left:4px solid #4fc3f7;}
+.range{border-left:4px solid #9575cd;}
 
-.range{
-  border-left-color:#9575cd;
-  background:rgba(149,117,205,0.08);
-}
-
-.time{
-  font-size:17px;
-  font-weight:bold;
-  color:#e0f7fa;
-}
-
-.name{
-  font-size:14px;
-  opacity:0.85;
-}
-
-/* 🔥 予約リスト見出し */
-.listTitle{
-  text-align:center;
-  margin-top:20px;
-  color:#b0bec5;
-  letter-spacing:1px;
-  font-size:16px;
-}
-
-.listTitle::after{
-  content:"";
-  display:block;
-  width:60%;
-  margin:5px auto;
-  height:1px;
-  background:rgba(255,255,255,0.2);
-}
+.time{font-weight:bold;}
 
 .overlay{
-position:fixed;
-top:0;left:0;
-width:100%;height:100%;
-background:rgba(0,0,0,0.8);
-display:none;
-align-items:center;
-justify-content:center;
-font-size:20px;
-z-index:9999;
+  position:fixed;
+  top:0;left:0;
+  width:100%;height:100%;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  background:rgba(0,0,0,0.85);
+  color:white;
+  font-size:22px;
+  z-index:9999; /* ★最前面 */
+  animation:fadeIn 0.2s;
+  z-index:9999;
+}
+
+@keyframes fadeIn{
+  from{opacity:0;}
+  to{opacity:1;}
+  
+}
+button.active{
+  background:#00e5ff;
+  color:black;
+  box-shadow:0 0 10px #00e5ff, 0 0 20px rgba(0,229,255,0.6);
 }
 </style>
 </head>
@@ -183,7 +145,7 @@ z-index:9999;
 
 <select id="alliance"></select>
 
-<button id="toggleBtn">空き枠のみ：OFF</button>
+<button id="toggleBtn">空き枠のみ表示：OFF</button>
 
 <h3>時間指定予約</h3>
 <select id="time"></select>
@@ -191,32 +153,42 @@ z-index:9999;
 
 <h3>範囲指定予約（最大2つ）</h3>
 
-<div class="card">① <select class="start"></select> 〜 <select class="end"></select></div>
-<div class="card">②（任意） <select class="start"></select> 〜 <select class="end"></select></div>
+<div class="card">
+① <select class="start"></select> 〜 <select class="end"></select>
+</div>
+
+<div class="card">
+②（任意）
+<select class="start">
+<option value="">未選択</option>
+</select>
+〜
+<select class="end">
+<option value="">未選択</option>
+</select>
+</div>
 
 <button id="rangeBtn">範囲指定予約</button>
 
-<h3 class="listTitle">予約リスト</h3>
+<h3>予約リスト</h3>
 <div id="list"></div>
 
 </div>
 
-<div class="overlay" id="loading">
-  <span id="loadingText">送信中...</span>
-</div>
+<div class="overlay" id="loading">送信中...</div>
 
 <script>
 const API="https://script.google.com/macros/s/AKfycbylkYrl4A2fYdCIdTZ2KDcXYrf-ihGeMIwHSUCAsBwnX_kVjgmox3cE1m5sgfvES4Hsdg/exec";
 
 let currentData=[];
 let showOnlyFree=false;
-let prevCount=0;
 
 const nameEl=document.getElementById("name");
 const accelEl=document.getElementById("accel");
 const allianceEl=document.getElementById("alliance");
 const timeEl=document.getElementById("time");
 const list=document.getElementById("list");
+const loading=document.getElementById("loading");
 
 const singleBtn=document.getElementById("singleBtn");
 const rangeBtn=document.getElementById("rangeBtn");
@@ -242,29 +214,21 @@ function getUsed(){
 return currentData.map(d=>d.time);
 }
 
-function showLoading(v){
-loading.style.display=v?"flex":"none";
-loadingText.textContent="送信中...";
-singleBtn.disabled=v;
-rangeBtn.disabled=v;
-}
-
-function showSuccess(){
-loadingText.textContent="予約完了！";
-loadingText.style.color="#00e676";
-}
-
-toggleBtn.onclick=()=>{
+/* ===== トグル ===== */
+toggleBtn.onclick = ()=>{
 showOnlyFree=!showOnlyFree;
-toggleBtn.textContent="空き枠のみ："+(showOnlyFree?"ON":"OFF");
-toggleBtn.classList.toggle("active",showOnlyFree);
+
+toggleBtn.textContent="空き枠のみ表示："+(showOnlyFree?"ON":"OFF");
+
+// ★これ追加（光る）
+toggleBtn.classList.toggle("active", showOnlyFree);
+
+// ★これ重要（まとめて更新）
 updateAll();
 };
-
-// 🔥 修正：選択保持
+/* ===== 時間保持 ===== */
 function updateTimeOptions(){
 const selected = timeEl.value;
-
 timeEl.innerHTML="";
 const used=getUsed();
 
@@ -276,16 +240,19 @@ timeEl.add(new Option(v,v));
 if(selected) timeEl.value = selected;
 }
 
-// 🔥 修正：範囲も保持
+/* ===== 範囲 ===== */
 function updateRangeOptions(){
 const used=getUsed();
 
 startEls.forEach((s,i)=>{
-
   const selectedStart = s.value;
   const selectedEnd = endEls[i].value;
 
   s.innerHTML="";
+
+  if(i===1){
+    s.add(new Option("未選択",""));
+  }
 
   times.forEach(t=>{
     if(showOnlyFree && used.includes(t)) return;
@@ -301,6 +268,11 @@ startEls.forEach((s,i)=>{
 }
 
 function updateEnd(startSel,endSel){
+if(!startSel.value){
+endSel.innerHTML="";
+endSel.add(new Option("未選択",""));
+return;
+}
 endSel.innerHTML="";
 let idx=times.indexOf(startSel.value);
 for(let i=idx+1;i<times.length;i++){
@@ -308,23 +280,58 @@ endSel.add(new Option(times[i],times[i]));
 }
 }
 
+/* ===== ボタン状態 ===== */
+function checkReady(){
+const used=getUsed();
+
+singleBtn.classList.toggle("ready",
+  nameEl.value.trim() &&
+  accelEl.value>0 &&
+  timeEl.value &&
+  !used.includes(timeEl.value)
+);
+
+let hasRange=false,hasFree=false;
+
 startEls.forEach((s,i)=>{
-s.onchange=()=>updateEnd(s,endEls[i]);
+if(s.value && endEls[i].value){
+hasRange=true;
+const sIdx=times.indexOf(s.value);
+const eIdx=times.indexOf(endEls[i].value);
+for(let j=sIdx;j<eIdx;j++){
+if(!used.includes(times[j])){
+hasFree=true;break;
+}
+}
+}
 });
 
-// 単発
-singleBtn.onclick=async ()=>{
-if(!nameEl.value.trim()){alert("名前入力");return;}
-if(!accelEl.value || accelEl.value<=0){alert("加速入力");return;}
-
-if(getUsed().includes(timeEl.value)){
-alert("この時間は埋まっています");
-return;
+rangeBtn.classList.toggle("ready",
+  nameEl.value.trim() &&
+  accelEl.value>0 &&
+  hasRange && hasFree
+);
 }
+
+/* ===== 演出 ===== */
+function showLoading(v){
+loading.style.display=v?"flex":"none";
+loading.innerText="送信中...";
+loading.style.color="white";
+}
+
+function showSuccess(){
+loading.innerText="予約完了！";
+loading.style.color="#00e676";
+}
+
+/* ===== 予約処理 ===== */
+singleBtn.onclick=async ()=>{
+if(!singleBtn.classList.contains("ready")) return;
 
 showLoading(true);
 
-const res = await fetch(API,{
+const res=await fetch(API,{
 method:"POST",
 body:new URLSearchParams({
 data:JSON.stringify({
@@ -337,26 +344,19 @@ accel:accelEl.value
 })
 });
 
-const text = await res.text();
+const text=await res.text();
+console.log("レスポンス:", text);
 
 if(text!=="ok"){
-showLoading(false);
-alert("予約失敗");
-return;
+showLoading(false);alert("予約失敗");return;
 }
 
 showSuccess();
-
-setTimeout(()=>{
-showLoading(false);
-load();
-},1500);
+setTimeout(()=>{showLoading(false);load();},1200);
 };
 
-// 範囲
 rangeBtn.onclick=async ()=>{
-if(!nameEl.value.trim()){alert("名前入力");return;}
-if(!accelEl.value || accelEl.value<=0){alert("加速入力");return;}
+if(!rangeBtn.classList.contains("ready")) return;
 
 let ranges=[];
 startEls.forEach((s,i)=>{
@@ -365,30 +365,9 @@ ranges.push({start:s.value,end:endEls[i].value});
 }
 });
 
-if(ranges.length===0){alert("選択して");return;}
-
-const used=getUsed();
-let hasFree=false;
-
-for(const r of ranges){
-const s=times.indexOf(r.start);
-const e=times.indexOf(r.end);
-for(let i=s;i<e;i++){
-if(!used.includes(times[i])){
-hasFree=true;
-break;
-}
-}
-}
-
-if(!hasFree){
-alert("空き枠がありません");
-return;
-}
-
 showLoading(true);
 
-const res = await fetch(API,{
+const res=await fetch(API,{
 method:"POST",
 body:new URLSearchParams({
 data:JSON.stringify({
@@ -401,54 +380,17 @@ accel:accelEl.value
 })
 });
 
-const text = await res.text();
+const text=await res.text();
 
 if(text!=="ok"){
-showLoading(false);
-alert("予約失敗");
-return;
+showLoading(false);alert("予約失敗");return;
 }
 
 showSuccess();
-
-setTimeout(()=>{
-showLoading(false);
-load();
-},1500);
+setTimeout(()=>{showLoading(false);load();},1200);
 };
 
-async function load(){
-const res=await fetch(API);
-const data=await res.json();
-
-if(data.length !== prevCount){
-  document.body.style.opacity="0.9";
-  setTimeout(()=>document.body.style.opacity="1",150);
-}
-prevCount = data.length;
-
-currentData=data;
-
-list.innerHTML=data.map(d=>{
-const typeClass = d.type==="range"?"range":"single";
-return `
-<div class="card row ${typeClass}">
-  <div class="time">${d.time||"調整中"}</div>
-  <div class="name">${d.name||""}</div>
-</div>
-`;
-}).join("");
-
-updateAll();
-}
-
-function updateAll(){
-updateTimeOptions();
-updateRangeOptions();
-}
-
-setInterval(load,3000);
-
+/* ===== 雪 ===== */
 function createSnow(){
 const s=document.getElementById("snow");
 for(let i=0;i<40;i++){
@@ -461,8 +403,32 @@ s.appendChild(e);
 }
 }
 
+/* ===== load ===== */
+async function load(){
+const res=await fetch(API);
+const data=await res.json();
+currentData=data;
+
+list.innerHTML=data.map(d=>`
+<div class="card row ${d.type==="range"?"range":"single"}">
+<div class="time">${d.time||"調整中"}</div>
+<div>${d.name||""}</div>
+</div>`).join("");
+
+updateAll();
+checkReady();
+}
+
+setInterval(load,3000);
+setInterval(checkReady,300);
+
 createSnow();
 load();
+function updateAll(){
+  updateTimeOptions();
+  updateRangeOptions();
+}
 </script>
+
 </body>
 </html>
