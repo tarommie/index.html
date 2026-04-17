@@ -101,7 +101,6 @@ button.active{
 .inputRow{display:flex;gap:8px;}
 .inputRow input{flex:1;}
 
-/* シートタブ */
 .sheet-tabs{
   display:flex;
   gap:6px;
@@ -128,7 +127,6 @@ button.active{
   box-shadow:0 0 6px rgba(0,229,255,0.4);
 }
 
-/* 予約リスト */
 .list-card{
   background:rgba(0,0,0,0.4);
   border:1px solid rgba(255,255,255,0.08);
@@ -177,7 +175,6 @@ button.active{
   cursor:pointer;
 }
 
-/* 確認モーダル */
 #confirm-modal{
   position:fixed;top:0;left:0;
   width:100%;height:100%;
@@ -222,7 +219,6 @@ button.active{
 
 <h2>2743官職予約</h2>
 
-<!-- シートタブ -->
 <div class="sheet-tabs">
   <div class="sheet-tab active" onclick="switchSheet('副執政官（月）', this)">副執政官（月）</div>
   <div class="sheet-tab" onclick="switchSheet('副執政官（火）', this)">副執政官（火）</div>
@@ -262,7 +258,6 @@ button.active{
 
 </div>
 
-<!-- 予約確認モーダル -->
 <div id="confirm-modal">
   <div class="modal-box">
     <p id="modal-title">予約の確認</p>
@@ -315,7 +310,6 @@ function generateTimes(){
 const times=generateTimes();
 function getUsed(){return currentData.map(d=>d.time);}
 
-// シート切り替え
 function switchSheet(name, el){
   currentSheet=name;
   document.querySelectorAll(".sheet-tab").forEach(t=>t.classList.remove("active"));
@@ -376,7 +370,7 @@ function updateEnd(startSel,endSel){
   }
   endSel.innerHTML="";
   let idx=times.indexOf(startSel.value);
-  for(let i=idx+1;i<times.length;i++) endSel.add(new Option(times[i],times[i]));
+  for(let i=idx+2;i<times.length;i++) endSel.add(new Option(times[i],times[i]));
 }
 
 function checkReady(){
@@ -410,7 +404,6 @@ function validateInputs(){
   return true;
 }
 
-// ===== 確認モーダル =====
 let pendingAction=null;
 
 function showConfirmModal(title, time, detail, action){
@@ -461,7 +454,17 @@ async function execSingle(){
     })})
   });
   const text=await res.text();
-  if(text==="duplicate"){showLoading(false);alert(`${timeEl.value} はすでに埋まっています`);load();return;}
+  if(text==="duplicate"){
+    showLoading(false);
+    alert(`${timeEl.value} はすでに埋まっています`);
+    load();
+    return;
+  }
+  if(text==="duplicate_name"){
+    showLoading(false);
+    alert("1人1枠までです。予約済みの場合はキャンセルしてから再予約してください");
+    return;
+  }
   if(text==="busy"){showLoading(false);alert("アクセスが集中しています。もう一度お試しください");return;}
   if(text!=="ok"){showLoading(false);alert("予約失敗: "+text);return;}
   showSuccess();
@@ -501,7 +504,17 @@ async function execRange(ranges){
     })})
   });
   const text=await res.text();
-  if(text==="duplicate"){showLoading(false);alert("選択した時間帯はすべて埋まっています");load();return;}
+  if(text==="duplicate"){
+    showLoading(false);
+    alert("選択した時間帯はすべて埋まっています");
+    load();
+    return;
+  }
+  if(text==="duplicate_name"){
+    showLoading(false);
+    alert("1人1枠までです。予約済みの場合はキャンセルしてから再予約してください");
+    return;
+  }
   if(text==="invalid"){showLoading(false);alert("有効な時間帯を選択してください");return;}
   if(text==="busy"){showLoading(false);alert("アクセスが集中しています。もう一度お試しください");return;}
   if(text!=="ok"){showLoading(false);alert("予約失敗: "+text);return;}
@@ -533,30 +546,27 @@ async function cancelOwn(dataStr){
 }
 
 async function load(){
-  // ★ 追加
   if(!currentData.length){
-    list.innerHTML = "<div style='text-align:center;color:rgba(255,255,255,0.3);padding:20px'>読み込み中...</div>";
+    list.innerHTML="<div style='text-align:center;color:rgba(255,255,255,0.3);padding:20px'>読み込み中...</div>";
   }
-
-  const cacheKey = "rsv_cache_" + currentSheet;
-  const cached = localStorage.getItem(cacheKey);
-  if(cached && !currentData.length){
-    currentData = JSON.parse(cached);
+  const cacheKey="rsv_cache_"+currentSheet;
+  const cached=localStorage.getItem(cacheKey);
+  if(cached&&!currentData.length){
+    currentData=JSON.parse(cached);
     renderList(currentData);
     updateAll();
   }
   try{
-    const res = await fetch(API + "?sheet=" + encodeURIComponent(currentSheet));
-    const text = await res.text();
-    const data = JSON.parse(text);
-    currentData = data;
-    // ★ シートごとに保存
-    localStorage.setItem(cacheKey, JSON.stringify(data));
+    const res=await fetch(API+"?sheet="+encodeURIComponent(currentSheet));
+    const text=await res.text();
+    const data=JSON.parse(text);
+    currentData=data;
+    localStorage.setItem(cacheKey,JSON.stringify(data));
     renderList(data);
     updateAll();
     checkReady();
-  } catch(e){
-    console.log("取得失敗:", e);
+  }catch(e){
+    console.log("取得失敗:",e);
   }
 }
 
@@ -577,8 +587,8 @@ function renderList(data){
       status:d.status||""
     }));
     const cancelBtn=ismine
-      ? `<button class="btn-cancel-own" onclick="cancelOwn('${dataStr}')">キャンセル</button>`
-      : "";
+      ?`<button class="btn-cancel-own" onclick="cancelOwn('${dataStr}')">キャンセル</button>`
+      :"";
     return `
     <div class="list-card ${d.type==="range"?"range":"single"}${ismine?" mine":""}">
       <div class="list-card-header">
@@ -595,7 +605,7 @@ function renderList(data){
 }
 
 function scheduleNext(){
-  const interval = 20000 + Math.random() * 10000;
+  const interval=20000+Math.random()*10000;
   setTimeout(async()=>{
     await load();
     scheduleNext();
@@ -604,11 +614,11 @@ function scheduleNext(){
 
 setInterval(checkReady,300);
 
-startEls.forEach((s, i) => {
-  s.onchange = () => {
-    const selE = endEls[i].value;
-    updateEnd(s, endEls[i]);
-    if(selE) endEls[i].value = selE;
+startEls.forEach((s,i)=>{
+  s.onchange=()=>{
+    const selE=endEls[i].value;
+    updateEnd(s,endEls[i]);
+    if(selE) endEls[i].value=selE;
   };
 });
 
