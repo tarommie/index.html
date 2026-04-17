@@ -533,23 +533,30 @@ async function cancelOwn(dataStr){
 }
 
 async function load(){
-  const cached=localStorage.getItem("rsv_cache");
-  if(cached&&!currentData.length){
-    currentData=JSON.parse(cached);
+  // ★ 追加
+  if(!currentData.length){
+    list.innerHTML = "<div style='text-align:center;color:rgba(255,255,255,0.3);padding:20px'>読み込み中...</div>";
+  }
+
+  const cacheKey = "rsv_cache_" + currentSheet;
+  const cached = localStorage.getItem(cacheKey);
+  if(cached && !currentData.length){
+    currentData = JSON.parse(cached);
     renderList(currentData);
     updateAll();
   }
   try{
-    const res=await fetch(API+"?sheet="+encodeURIComponent(currentSheet));
-    const text=await res.text();
-    const data=JSON.parse(text);
-    currentData=data;
-    localStorage.setItem("rsv_cache",JSON.stringify(data));
+    const res = await fetch(API + "?sheet=" + encodeURIComponent(currentSheet));
+    const text = await res.text();
+    const data = JSON.parse(text);
+    currentData = data;
+    // ★ シートごとに保存
+    localStorage.setItem(cacheKey, JSON.stringify(data));
     renderList(data);
     updateAll();
     checkReady();
-  }catch(e){
-    console.log("取得失敗:",e);
+  } catch(e){
+    console.log("取得失敗:", e);
   }
 }
 
@@ -596,8 +603,7 @@ function scheduleNext(){
 }
 
 setInterval(checkReady,300);
-load();
-scheduleNext();
+
 startEls.forEach((s, i) => {
   s.onchange = () => {
     const selE = endEls[i].value;
@@ -608,6 +614,7 @@ startEls.forEach((s, i) => {
 
 load();
 scheduleNext();
+
 function updateAll(){
   updateTimeOptions();
   updateRangeOptions();
