@@ -598,7 +598,16 @@ function scheduleNext(){
 setInterval(checkReady,300);
 load();
 scheduleNext();
+startEls.forEach((s, i) => {
+  s.onchange = () => {
+    const selE = endEls[i].value;
+    updateEnd(s, endEls[i]);
+    if(selE) endEls[i].value = selE;
+  };
+});
 
+load();
+scheduleNext();
 function updateAll(){
   updateTimeOptions();
   updateRangeOptions();
