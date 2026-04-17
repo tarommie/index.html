@@ -1,13 +1,11 @@
 <!DOCTYPE html>
 <html>
 <head>
- <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-K2MC9P9VF7"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
-
   gtag('config', 'G-K2MC9P9VF7');
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -16,37 +14,21 @@ body{
   margin:0;
   color:white;
   font-family:"Trebuchet MS",sans-serif;
+  min-height:100vh;
   background:
     radial-gradient(circle at 20% 30%, rgba(255,255,255,0.15), transparent 40%),
     radial-gradient(circle at 80% 70%, rgba(0,200,255,0.1), transparent 40%),
     linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+  background-attachment:fixed;
 }
 body::before{
   content:"";
   position:fixed;
+  top:0;left:0;
   width:100%;height:100%;
   background:rgba(255,255,255,0.05);
   backdrop-filter:blur(3px);
-}
-#snow{position:fixed;width:100%;height:100%;pointer-events:none;}
-.snowflake{
-  position:absolute;
-  top:-60px;
-  animation:fall linear infinite;
-  pointer-events:none;
-  filter:drop-shadow(0 0 2px rgba(255,255,255,0.6));
-}
-@keyframes fall{
-  0%{
-    transform:translateY(0) translateX(0) rotate(0deg);
-    opacity:0;
-  }
-  5%{opacity:1;}
-  90%{opacity:0.7;}
-  100%{
-    transform:translateY(110vh) translateX(var(--drift)) rotate(var(--spin));
-    opacity:0;
-  }
+  z-index:0;
 }
 
 .container{position:relative;z-index:3;padding:10px;}
@@ -56,7 +38,6 @@ h2{
   color:#e0f7fa;
   text-shadow:0 1px 4px rgba(0,0,0,0.4);
 }
-
 h3{
   margin:12px 0 4px;
   font-size:14px;
@@ -64,7 +45,6 @@ h3{
   letter-spacing:0.5px;
 }
 
-/* input / select 共通：ダークテーマに合わせる */
 input, select{
   background:rgba(255,255,255,0.08);
   color:white;
@@ -97,19 +77,18 @@ button{
   transition:0.2s;
   cursor:pointer;
 }
-/* ボタンの光を抑える */
+button:active{transform:scale(0.95);}
 button.ready{
   background:#00e5ff;
   color:black;
-  box-shadow:0 0 6px rgba(0,229,255,0.4);  /* 弱めに */
+  box-shadow:0 0 6px rgba(0,229,255,0.4);
 }
 button.active{
   background:#00e5ff;
   color:black;
-  box-shadow:0 0 8px rgba(0,229,255,0.5);  /* 弱めに */
+  box-shadow:0 0 8px rgba(0,229,255,0.5);
 }
 
-/* カード：全セクション共通 */
 .card{
   background:rgba(0,0,0,0.4);
   border:1px solid rgba(255,255,255,0.08);
@@ -122,6 +101,33 @@ button.active{
 .inputRow{display:flex;gap:8px;}
 .inputRow input{flex:1;}
 
+/* シートタブ */
+.sheet-tabs{
+  display:flex;
+  gap:6px;
+  margin:6px 0;
+  flex-wrap:wrap;
+}
+.sheet-tab{
+  flex:1;
+  padding:8px 6px;
+  border-radius:10px;
+  font-size:13px;
+  background:rgba(255,255,255,0.08);
+  color:rgba(255,255,255,0.6);
+  border:1px solid rgba(255,255,255,0.15);
+  cursor:pointer;
+  transition:0.2s;
+  text-align:center;
+  font-family:"Trebuchet MS",sans-serif;
+}
+.sheet-tab.active{
+  background:#00e5ff;
+  color:black;
+  border-color:#00e5ff;
+  box-shadow:0 0 6px rgba(0,229,255,0.4);
+}
+
 /* 予約リスト */
 .list-card{
   background:rgba(0,0,0,0.4);
@@ -129,25 +135,81 @@ button.active{
   border-radius:12px;
   padding:10px 14px;
   margin:6px 0;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
 }
 .list-card.single{border-left:4px solid #4fc3f7;}
 .list-card.range{border-left:4px solid #9575cd;}
-.time{font-weight:bold;font-size:15px;}
-.pending-hint{font-size:11px;color:rgba(255,255,255,0.35);margin-top:2px;}
+.list-card.mine{
+  border-color:#00e5ff;
+  background:rgba(0,229,255,0.08);
+}
 
-.overlay{
-  position:fixed;
-  top:0;left:0;
+.list-card-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:8px;
+}
+.time{font-weight:bold;font-size:15px;}
+.mine-label{
+  font-size:10px;
+  background:rgba(0,229,255,0.2);
+  color:#00e5ff;
+  border-radius:20px;
+  padding:1px 8px;
+  margin-left:6px;
+}
+.pending-hint{
+  font-size:11px;
+  color:rgba(255,255,255,0.35);
+  margin-top:4px;
+  line-height:1.6;
+  word-break:break-all;
+}
+.btn-cancel-own{
+  background:rgba(255,82,82,0.15);
+  color:#ff5252;
+  border:1px solid rgba(255,82,82,0.3);
+  border-radius:8px;
+  padding:4px 10px;
+  font-size:11px;
+  width:auto;
+  margin:6px 0 0;
+  cursor:pointer;
+}
+
+/* 確認モーダル */
+#confirm-modal{
+  position:fixed;top:0;left:0;
   width:100%;height:100%;
   display:none;
-  align-items:center;
-  justify-content:center;
+  align-items:center;justify-content:center;
+  background:rgba(0,0,0,0.8);
+  z-index:9999;
+}
+.modal-box{
+  background:#1c3140;
+  border:1px solid rgba(255,255,255,0.15);
+  border-radius:16px;
+  padding:24px 20px;
+  width:85%;
+  max-width:320px;
+  text-align:center;
+}
+.modal-box p{margin:0 0 6px;font-size:15px;}
+.modal-box .sub{font-size:13px;color:rgba(255,255,255,0.6);margin-bottom:6px;}
+.modal-box .sub2{font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:20px;}
+.modal-btns{display:flex;gap:10px;}
+.modal-btns button{flex:1;margin:0;}
+.btn-cancel-modal{background:rgba(255,255,255,0.08);color:white;}
+.btn-confirm{background:#00e5ff;color:black;}
+
+.overlay{
+  position:fixed;top:0;left:0;
+  width:100%;height:100%;
+  display:none;
+  align-items:center;justify-content:center;
   background:rgba(0,0,0,0.85);
-  color:white;
-  font-size:22px;
+  color:white;font-size:22px;
   z-index:9999;
   animation:fadeIn 0.2s;
 }
@@ -156,19 +218,17 @@ button.active{
 </head>
 <body>
 
-<div id="snow"></div>
-
 <div class="container">
 
 <h2>2743官職予約</h2>
-<div class="card">
-  <select id="sheetSelect">
-    <option value="副執政官（月）">副執政官（月）</option>
-    <option value="副執政官（火）">副執政官（火）</option>
-    <option value="教育部長">教育部長</option>
-  </select>
+
+<!-- シートタブ -->
+<div class="sheet-tabs">
+  <div class="sheet-tab active" onclick="switchSheet('副執政官（月）', this)">副執政官（月）</div>
+  <div class="sheet-tab" onclick="switchSheet('副執政官（火）', this)">副執政官（火）</div>
+  <div class="sheet-tab" onclick="switchSheet('教育部長', this)">教育部長</div>
 </div>
-<!-- 入力欄をカードで囲む -->
+
 <div class="card">
   <div class="inputRow">
     <input id="name" placeholder="名前">
@@ -202,6 +262,19 @@ button.active{
 
 </div>
 
+<!-- 予約確認モーダル -->
+<div id="confirm-modal">
+  <div class="modal-box">
+    <p id="modal-title">予約の確認</p>
+    <div class="sub" id="modal-time"></div>
+    <div class="sub2" id="modal-detail"></div>
+    <div class="modal-btns">
+      <button class="btn-cancel-modal" onclick="closeConfirmModal()">キャンセル</button>
+      <button class="btn-confirm" id="modal-ok-btn">予約する</button>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="loading">送信中...</div>
 
 <script>
@@ -209,6 +282,7 @@ const API="https://script.google.com/macros/s/AKfycbylkYrl4A2fYdCIdTZ2KDcXYrf-ih
 
 let currentData=[];
 let showOnlyFree=false;
+let currentSheet="副執政官（月）";
 
 const nameEl=document.getElementById("name");
 const accelEl=document.getElementById("accel");
@@ -221,9 +295,7 @@ const rangeBtn=document.getElementById("rangeBtn");
 const toggleBtn=document.getElementById("toggleBtn");
 const startEls=document.querySelectorAll(".start");
 const endEls=document.querySelectorAll(".end");
-const sheetSelect = document.getElementById("sheetSelect");
 
-// 名前・加速をlocalStorageで保持
 if(localStorage.getItem("rsv_name")) nameEl.value=localStorage.getItem("rsv_name");
 if(localStorage.getItem("rsv_accel")) accelEl.value=localStorage.getItem("rsv_accel");
 nameEl.oninput=()=>localStorage.setItem("rsv_name",nameEl.value);
@@ -243,6 +315,17 @@ function generateTimes(){
 const times=generateTimes();
 function getUsed(){return currentData.map(d=>d.time);}
 
+// シート切り替え
+function switchSheet(name, el){
+  currentSheet=name;
+  document.querySelectorAll(".sheet-tab").forEach(t=>t.classList.remove("active"));
+  el.classList.add("active");
+  currentData=[];
+  lastTimeOptions="";
+  lastRangeOptions="";
+  load();
+}
+
 toggleBtn.onclick=()=>{
   showOnlyFree=!showOnlyFree;
   toggleBtn.textContent="空き枠のみ表示："+(showOnlyFree?"ON":"OFF");
@@ -250,34 +333,33 @@ toggleBtn.onclick=()=>{
   updateAll();
 };
 
-// 変更後
-let lastTimeOptions = "";
-
+let lastTimeOptions="";
 function updateTimeOptions(){
-  const used = getUsed();
-  const key = times.filter(v => !(showOnlyFree && used.includes(v))).join(",");
-
-  // 前回と同じなら再構築しない
-  if(key === lastTimeOptions) return;
-  lastTimeOptions = key;
-
-  const selected = timeEl.value;
-  timeEl.innerHTML = "";
-  times.forEach(v => {
-    if(showOnlyFree && used.includes(v)) return;
-    timeEl.add(new Option(v, v));
+  const used=getUsed();
+  const key=times.filter(v=>!(showOnlyFree&&used.includes(v))).join(",");
+  if(key===lastTimeOptions) return;
+  lastTimeOptions=key;
+  const selected=timeEl.value;
+  timeEl.innerHTML="";
+  times.forEach(v=>{
+    if(showOnlyFree&&used.includes(v)) return;
+    timeEl.add(new Option(v,v));
   });
-  if(selected) timeEl.value = selected;
+  if(selected) timeEl.value=selected;
 }
 
+let lastRangeOptions="";
 function updateRangeOptions(){
   const used=getUsed();
+  const key=times.filter(v=>!(showOnlyFree&&used.includes(v))).join(",");
+  if(key===lastRangeOptions) return;
+  lastRangeOptions=key;
   startEls.forEach((s,i)=>{
     const selS=s.value, selE=endEls[i].value;
     s.innerHTML="";
     if(i===1) s.add(new Option("未選択",""));
     times.forEach(t=>{
-      if(showOnlyFree && used.includes(t)) return;
+      if(showOnlyFree&&used.includes(t)) return;
       s.add(new Option(t,t));
     });
     if(selS) s.value=selS;
@@ -298,23 +380,16 @@ function updateEnd(startSel,endSel){
 }
 
 function checkReady(){
-  const used=getUsed();
- singleBtn.classList.toggle("ready",
-  nameEl.value.trim() && accelEl.value>0 && timeEl.value  // ← 埋まってても押せる
-);
-  let hasRange=false, hasFree=false;
+  singleBtn.classList.toggle("ready",
+    nameEl.value.trim()&&accelEl.value>0&&timeEl.value
+  );
+  let hasRange=false;
   startEls.forEach((s,i)=>{
-    if(s.value && endEls[i].value){
-      hasRange=true;
-      const sIdx=times.indexOf(s.value), eIdx=times.indexOf(endEls[i].value);
-      for(let j=sIdx;j<eIdx;j++){
-        if(!used.includes(times[j])){hasFree=true;break;}
-      }
-    }
+    if(s.value&&endEls[i].value) hasRange=true;
   });
-rangeBtn.classList.toggle("ready",
-  nameEl.value.trim() && accelEl.value>0 && hasRange
-);
+  rangeBtn.classList.toggle("ready",
+    nameEl.value.trim()&&accelEl.value>0&&hasRange
+  );
 }
 
 function showLoading(v){
@@ -327,7 +402,34 @@ function showSuccess(){
   loading.style.color="#00e676";
 }
 
-singleBtn.onclick = async () => {
+function validateInputs(){
+  let msg=[];
+  if(!nameEl.value.trim()) msg.push("名前");
+  if(!accelEl.value||accelEl.value<=0) msg.push("加速");
+  if(msg.length>0){alert(`${msg.join("と")}を入力してください`);return false;}
+  return true;
+}
+
+// ===== 確認モーダル =====
+let pendingAction=null;
+
+function showConfirmModal(title, time, detail, action){
+  document.getElementById("modal-title").textContent=title;
+  document.getElementById("modal-time").textContent=time;
+  document.getElementById("modal-detail").textContent=detail;
+  document.getElementById("modal-ok-btn").onclick=()=>{
+    closeConfirmModal();
+    action();
+  };
+  document.getElementById("confirm-modal").style.display="flex";
+}
+
+function closeConfirmModal(){
+  document.getElementById("confirm-modal").style.display="none";
+}
+
+// ===== 単発予約 =====
+singleBtn.onclick=async()=>{
   if(!validateInputs()) return;
   if(!singleBtn.classList.contains("ready")) return;
 
@@ -337,214 +439,165 @@ singleBtn.onclick = async () => {
     return;
   }
 
-  showLoading(true);
-const res = await fetch(API, {
-  method: "POST",
-  body: new URLSearchParams({
-    data: JSON.stringify({
-      type: "single",
-      sheet: sheetSelect.value,
-      time: timeEl.value,
-      name: nameEl.value,
-      alliance: allianceEl.value,
-      accel: accelEl.value
-    })
-  })
-});
-const text = await res.text();
-
-  if(text === "duplicate"){
-    showLoading(false);
-    alert(`${timeEl.value} はすでに埋まっています`);
-    load();
-    return;
-  }
-  if(text !== "ok"){showLoading(false); alert("レスポンス: " + text); return;}
-  showSuccess();
-  setTimeout(()=>{showLoading(false); load();}, 1200);
+  showConfirmModal(
+    "予約の確認",
+    timeEl.value,
+    `${nameEl.value}　${allianceEl.value}　加速${accelEl.value}日`,
+    execSingle
+  );
 };
 
-rangeBtn.onclick=async()=>{
-   if(!validateInputs()) return;
-  if(!rangeBtn.classList.contains("ready")) return;
-  let ranges=[];
-  startEls.forEach((s,i)=>{
-    if(s.value && endEls[i].value) ranges.push({start:s.value,end:endEls[i].value});
-  });
+async function execSingle(){
   showLoading(true);
-  const res=await fetch(API,{method:"POST",body:new URLSearchParams({data:JSON.stringify({
-    type:"range",sheet: sheetSelect.value,ranges,
-    name:nameEl.value,alliance:allianceEl.value,accel:accelEl.value
-  })})});
+  const res=await fetch(API,{
+    method:"POST",
+    body:new URLSearchParams({data:JSON.stringify({
+      type:"single",
+      sheet:currentSheet,
+      time:timeEl.value,
+      name:nameEl.value,
+      alliance:allianceEl.value,
+      accel:accelEl.value
+    })})
+  });
   const text=await res.text();
-  if(text === "duplicate"){
-  showLoading(false);
-  alert("選択した時間帯はすべて埋まっています");
-  load();
-  return;
-}
-if(text === "invalid"){
-  showLoading(false);
-  alert("有効な時間帯を選択してください");
-  return;
-}
-if(text !== "ok"){showLoading(false); alert("予約失敗"); return;}
+  if(text==="duplicate"){showLoading(false);alert(`${timeEl.value} はすでに埋まっています`);load();return;}
+  if(text==="busy"){showLoading(false);alert("アクセスが集中しています。もう一度お試しください");return;}
+  if(text!=="ok"){showLoading(false);alert("予約失敗: "+text);return;}
   showSuccess();
   setTimeout(()=>{showLoading(false);load();},1200);
-};
-function validateInputs(){
-  let msg = [];
-  if(!nameEl.value.trim()) msg.push("名前");
-  if(!accelEl.value || accelEl.value <= 0) msg.push("加速");
-  if(msg.length > 0){
-    alert(`${msg.join("と")}を入力してください`);
-    return false;
-  }
-  return true;
 }
-sheetSelect.onchange = () => {
-  currentData = [];
-  load();
+
+// ===== 範囲予約 =====
+rangeBtn.onclick=async()=>{
+  if(!validateInputs()) return;
+  if(!rangeBtn.classList.contains("ready")) return;
+
+  let ranges=[];
+  startEls.forEach((s,i)=>{
+    if(s.value&&endEls[i].value) ranges.push({start:s.value,end:endEls[i].value});
+  });
+
+  const rangeStr=ranges.map(r=>`${r.start}〜${r.end}`).join("、");
+  showConfirmModal(
+    "範囲指定予約の確認",
+    rangeStr,
+    `${nameEl.value}　${allianceEl.value}　加速${accelEl.value}日`,
+    ()=>execRange(ranges)
+  );
 };
-function createSnow(){
-  const container = document.getElementById("snow");
 
-  // 結晶の形を6種類SVGで定義
-  const crystals = [
-    // 6本腕の基本結晶
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-12 -12 24 24">
-      <g stroke="white" stroke-linecap="round">
-        <line x1="0" y1="-10" x2="0" y2="10" stroke-width="1.2"/>
-        <line x1="-8.66" y1="-5" x2="8.66" y2="5" stroke-width="1.2"/>
-        <line x1="-8.66" y1="5" x2="8.66" y2="-5" stroke-width="1.2"/>
-        <line x1="0" y1="-10" x2="-3" y2="-7" stroke-width="0.8"/>
-        <line x1="0" y1="-10" x2="3" y2="-7" stroke-width="0.8"/>
-        <line x1="0" y1="10" x2="-3" y2="7" stroke-width="0.8"/>
-        <line x1="0" y1="10" x2="3" y2="7" stroke-width="0.8"/>
-        <line x1="-8.66" y1="-5" x2="-7" y2="-8" stroke-width="0.8"/>
-        <line x1="-8.66" y1="-5" x2="-6" y2="-2" stroke-width="0.8"/>
-        <line x1="8.66" y1="5" x2="7" y2="8" stroke-width="0.8"/>
-        <line x1="8.66" y1="5" x2="6" y2="2" stroke-width="0.8"/>
-      </g>
-    </svg>`,
-    // 枝付き結晶
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-12 -12 24 24">
-      <g stroke="white" stroke-linecap="round">
-        <line x1="0" y1="-11" x2="0" y2="11" stroke-width="1.4"/>
-        <line x1="-9.5" y1="-5.5" x2="9.5" y2="5.5" stroke-width="1.4"/>
-        <line x1="-9.5" y1="5.5" x2="9.5" y2="-5.5" stroke-width="1.4"/>
-        <line x1="0" y1="-6" x2="-4" y2="-8" stroke-width="0.9"/>
-        <line x1="0" y1="-6" x2="4" y2="-8" stroke-width="0.9"/>
-        <line x1="0" y1="6" x2="-4" y2="8" stroke-width="0.9"/>
-        <line x1="0" y1="6" x2="4" y2="8" stroke-width="0.9"/>
-        <line x1="-5" y1="-3" x2="-7.5" y2="-7" stroke-width="0.9"/>
-        <line x1="-5" y1="-3" x2="-3" y2="-1" stroke-width="0.9"/>
-        <line x1="5" y1="3" x2="7.5" y2="7" stroke-width="0.9"/>
-        <line x1="5" y1="3" x2="3" y2="1" stroke-width="0.9"/>
-      </g>
-    </svg>`,
-    // シンプル細め
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-10 -10 20 20">
-      <g stroke="white" stroke-linecap="round" stroke-width="1">
-        <line x1="0" y1="-9" x2="0" y2="9"/>
-        <line x1="-7.8" y1="-4.5" x2="7.8" y2="4.5"/>
-        <line x1="-7.8" y1="4.5" x2="7.8" y2="-4.5"/>
-        <line x1="-2.5" y1="-5" x2="2.5" y2="-5" stroke-width="0.7"/>
-        <line x1="-2.5" y1="5" x2="2.5" y2="5" stroke-width="0.7"/>
-        <line x1="-6" y1="-1" x2="-6" y2="1" stroke-width="0.7"/>
-        <line x1="6" y1="-1" x2="6" y2="1" stroke-width="0.7"/>
-      </g>
-    </svg>`,
-    // 小さい丸付き
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-12 -12 24 24">
-      <g stroke="white" stroke-linecap="round">
-        <line x1="0" y1="-10" x2="0" y2="10" stroke-width="1.2"/>
-        <line x1="-8.66" y1="-5" x2="8.66" y2="5" stroke-width="1.2"/>
-        <line x1="-8.66" y1="5" x2="8.66" y2="-5" stroke-width="1.2"/>
-        <circle cx="0" cy="-10" r="1.5" fill="white" stroke="none"/>
-        <circle cx="0" cy="10" r="1.5" fill="white" stroke="none"/>
-        <circle cx="-8.66" cy="-5" r="1.5" fill="white" stroke="none"/>
-        <circle cx="8.66" cy="5" r="1.5" fill="white" stroke="none"/>
-        <circle cx="-8.66" cy="5" r="1.5" fill="white" stroke="none"/>
-        <circle cx="8.66" cy="-5" r="1.5" fill="white" stroke="none"/>
-        <circle cx="0" cy="0" r="2" fill="white" stroke="none"/>
-      </g>
-    </svg>`,
-  ];
+async function execRange(ranges){
+  showLoading(true);
+  const res=await fetch(API,{
+    method:"POST",
+    body:new URLSearchParams({data:JSON.stringify({
+      type:"range",
+      sheet:currentSheet,
+      ranges,
+      name:nameEl.value,
+      alliance:allianceEl.value,
+      accel:accelEl.value
+    })})
+  });
+  const text=await res.text();
+  if(text==="duplicate"){showLoading(false);alert("選択した時間帯はすべて埋まっています");load();return;}
+  if(text==="invalid"){showLoading(false);alert("有効な時間帯を選択してください");return;}
+  if(text==="busy"){showLoading(false);alert("アクセスが集中しています。もう一度お試しください");return;}
+  if(text!=="ok"){showLoading(false);alert("予約失敗: "+text);return;}
+  showSuccess();
+  setTimeout(()=>{showLoading(false);load();},1200);
+}
 
-  for(let i = 0; i < 50; i++){
-    const el = document.createElement("div");
-    el.className = "snowflake";
+// ===== 自分の予約キャンセル =====
+async function cancelOwn(dataStr){
+  const target=JSON.parse(decodeURIComponent(dataStr));
+  if(!confirm(`「${target.time||"調整中"}」の予約をキャンセルしますか？`)) return;
 
-    const size     = Math.random() * 18 + 10;   // 10〜28px
-    const duration = Math.random() * 10 + 8;    // 8〜18秒
-    const delay    = Math.random() * 15;
-    const drift    = (Math.random() - 0.5) * 150;
-    const spin     = (Math.random() > 0.5 ? 1 : -1) * (Math.random() * 360 + 180) + "deg";
-    const shape    = crystals[Math.floor(Math.random() * crystals.length)];
-
-    el.style.cssText = `
-      left:${Math.random() * 100}vw;
-      width:${size}px;
-      height:${size}px;
-      animation-duration:${duration}s;
-      animation-delay:-${delay}s;
-      --drift:${drift}px;
-      --spin:${spin};
-      opacity:${Math.random() * 0.5 + 0.3};
-    `;
-    el.innerHTML = shape;
-    container.appendChild(el);
-  }
+  showLoading(true);
+  const res=await fetch(API,{
+    method:"POST",
+    body:new URLSearchParams({data:JSON.stringify({
+      type:"delete",
+      sheet:currentSheet,
+      password:"1232",
+      time:target.time,
+      name:target.name,
+      status:target.status
+    })})
+  });
+  const text=await res.text();
+  showLoading(false);
+  if(text!=="ok"){alert("キャンセル失敗: "+text);return;}
+  load();
 }
 
 async function load(){
-  const cached = localStorage.getItem("rsv_cache");
-  if(cached && !currentData.length){
-    currentData = JSON.parse(cached);
+  const cached=localStorage.getItem("rsv_cache");
+  if(cached&&!currentData.length){
+    currentData=JSON.parse(cached);
     renderList(currentData);
     updateAll();
   }
-
-  try {
-    const res = await fetch(API + "?sheet=" + encodeURIComponent(sheetSelect.value));
-    const text = await res.text();  // ← まずテキストで受け取る
-    console.log("GETレスポンス:", text);  // ← ログで確認
-    const data = JSON.parse(text);
-    currentData = data;
-    localStorage.setItem("rsv_cache", JSON.stringify(data));
+  try{
+    const res=await fetch(API+"?sheet="+encodeURIComponent(currentSheet));
+    const text=await res.text();
+    const data=JSON.parse(text);
+    currentData=data;
+    localStorage.setItem("rsv_cache",JSON.stringify(data));
     renderList(data);
     updateAll();
     checkReady();
-  } catch(e) {
-    console.log("取得失敗:", e);
+  }catch(e){
+    console.log("取得失敗:",e);
   }
 }
 
 function renderList(data){
-  list.innerHTML = data.map(d => {
-    let hint = "";
-    if(d.status === "pending" && d.candidates){
-      try {
-        const ts = JSON.parse(d.candidates);
-        hint = `<div class="pending-hint">${ts.join("  /  ")}</div>`;
-      } catch(e){}
+  const myName=(localStorage.getItem("rsv_name")||"").trim();
+  list.innerHTML=data.map(d=>{
+    const ismine=myName&&d.name===myName;
+    let hint="";
+    if(d.status==="pending"&&d.candidates){
+      try{
+        const ts=JSON.parse(d.candidates);
+        hint=`<div class="pending-hint">${ts.join(" / ")}</div>`;
+      }catch(e){}
     }
+    const dataStr=encodeURIComponent(JSON.stringify({
+      time:d.time||"",
+      name:d.name||"",
+      status:d.status||""
+    }));
+    const cancelBtn=ismine
+      ? `<button class="btn-cancel-own" onclick="cancelOwn('${dataStr}')">キャンセル</button>`
+      : "";
     return `
-    <div class="list-card ${d.type === "range" ? "range" : "single"}">
-      <div>
-        <div class="time">${d.time || "調整中"}</div>
-        ${hint}
+    <div class="list-card ${d.type==="range"?"range":"single"}${ismine?" mine":""}">
+      <div class="list-card-header">
+        <div>
+          <span class="time">${d.time||"調整中"}</span>
+          ${ismine?`<span class="mine-label">自分</span>`:""}
+        </div>
+        <div>${d.name||""}</div>
       </div>
-      <div>${d.name || ""}</div>
+      ${hint}
+      ${cancelBtn}
     </div>`;
   }).join("");
 }
 
-setInterval(load,3000);
+function scheduleNext(){
+  const interval = 20000 + Math.random() * 10000;
+  setTimeout(async()=>{
+    await load();
+    scheduleNext();
+  },interval);
+}
+
 setInterval(checkReady,300);
-createSnow();
 load();
+scheduleNext();
 
 function updateAll(){
   updateTimeOptions();
