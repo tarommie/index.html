@@ -161,7 +161,13 @@ button.active{
 <div class="container">
 
 <h2>2743官職予約</h2>
-
+<div class="card">
+  <select id="sheetSelect">
+    <option value="副執政官（月）">副執政官（月）</option>
+    <option value="副執政官（火）">副執政官（火）</option>
+    <option value="教育部長">教育部長</option>
+  </select>
+</div>
 <!-- 入力欄をカードで囲む -->
 <div class="card">
   <div class="inputRow">
@@ -215,6 +221,7 @@ const rangeBtn=document.getElementById("rangeBtn");
 const toggleBtn=document.getElementById("toggleBtn");
 const startEls=document.querySelectorAll(".start");
 const endEls=document.querySelectorAll(".end");
+const sheetSelect = document.getElementById("sheetSelect");
 
 // 名前・加速をlocalStorageで保持
 if(localStorage.getItem("rsv_name")) nameEl.value=localStorage.getItem("rsv_name");
@@ -321,6 +328,7 @@ function showSuccess(){
 }
 
 singleBtn.onclick = async () => {
+  if(!validateInputs()) return;
   if(!singleBtn.classList.contains("ready")) return;
 
   if(getUsed().includes(timeEl.value)){
@@ -330,11 +338,20 @@ singleBtn.onclick = async () => {
   }
 
   showLoading(true);
-  const res = await fetch(API, {method:"POST", body: new URLSearchParams({data: JSON.stringify({
-    type:"single", time:timeEl.value,
-    name:nameEl.value, alliance:allianceEl.value, accel:accelEl.value
-  })})});
-  const text = await res.text();
+const res = await fetch(API, {
+  method: "POST",
+  body: new URLSearchParams({
+    data: JSON.stringify({
+      type: "single",
+      sheet: sheetSelect.value,
+      time: timeEl.value,
+      name: nameEl.value,
+      alliance: allianceEl.value,
+      accel: accelEl.value
+    })
+  })
+});
+const text = await res.text();
 
   if(text === "duplicate"){
     showLoading(false);
@@ -342,12 +359,13 @@ singleBtn.onclick = async () => {
     load();
     return;
   }
-  if(text !== "ok"){showLoading(false); alert("予約失敗"); return;}
+  if(text !== "ok"){showLoading(false); alert("レスポンス: " + text); return;}
   showSuccess();
   setTimeout(()=>{showLoading(false); load();}, 1200);
 };
 
 rangeBtn.onclick=async()=>{
+   if(!validateInputs()) return;
   if(!rangeBtn.classList.contains("ready")) return;
   let ranges=[];
   startEls.forEach((s,i)=>{
@@ -355,7 +373,7 @@ rangeBtn.onclick=async()=>{
   });
   showLoading(true);
   const res=await fetch(API,{method:"POST",body:new URLSearchParams({data:JSON.stringify({
-    type:"range",ranges,
+    type:"range",sheet: sheetSelect.value,ranges,
     name:nameEl.value,alliance:allianceEl.value,accel:accelEl.value
   })})});
   const text=await res.text();
@@ -374,7 +392,20 @@ if(text !== "ok"){showLoading(false); alert("予約失敗"); return;}
   showSuccess();
   setTimeout(()=>{showLoading(false);load();},1200);
 };
-
+function validateInputs(){
+  let msg = [];
+  if(!nameEl.value.trim()) msg.push("名前");
+  if(!accelEl.value || accelEl.value <= 0) msg.push("加速");
+  if(msg.length > 0){
+    alert(`${msg.join("と")}を入力してください`);
+    return false;
+  }
+  return true;
+}
+sheetSelect.onchange = () => {
+  currentData = [];
+  load();
+};
 function createSnow(){
   const container = document.getElementById("snow");
 
@@ -468,7 +499,6 @@ function createSnow(){
 }
 
 async function load(){
-  // キャッシュがあれば即表示
   const cached = localStorage.getItem("rsv_cache");
   if(cached && !currentData.length){
     currentData = JSON.parse(cached);
@@ -476,13 +506,19 @@ async function load(){
     updateAll();
   }
 
-  const res  = await fetch(API);
-  const data = await res.json();
-  currentData = data;
-  localStorage.setItem("rsv_cache", JSON.stringify(data));
-  renderList(data);
-  updateAll();
-  checkReady();
+  try {
+    const res = await fetch(API + "?sheet=" + encodeURIComponent(sheetSelect.value));
+    const text = await res.text();  // ← まずテキストで受け取る
+    console.log("GETレスポンス:", text);  // ← ログで確認
+    const data = JSON.parse(text);
+    currentData = data;
+    localStorage.setItem("rsv_cache", JSON.stringify(data));
+    renderList(data);
+    updateAll();
+    checkReady();
+  } catch(e) {
+    console.log("取得失敗:", e);
+  }
 }
 
 function renderList(data){

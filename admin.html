@@ -1,16 +1,14 @@
 <!DOCTYPE html>
 <html>
 <head>
-<!-- Google tag (gtag.js) -->
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-K2MC9P9VF7"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
-
   gtag('config', 'G-K2MC9P9VF7');
 </script>
-<meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
 *{box-sizing:border-box;}
 body{
@@ -21,7 +19,6 @@ body{
   min-height:100vh;
 }
 
-/* パスワード画面 */
 #pw-screen{
   display:flex;
   flex-direction:column;
@@ -31,11 +28,7 @@ body{
   gap:14px;
   padding:20px;
 }
-#pw-screen h2{
-  margin:0;
-  color:#e0f7fa;
-  letter-spacing:1px;
-}
+#pw-screen h2{margin:0;color:#e0f7fa;letter-spacing:1px;}
 #pw-screen input{
   width:100%;
   max-width:280px;
@@ -51,7 +44,6 @@ body{
 #pw-screen input::placeholder{letter-spacing:0;color:rgba(255,255,255,0.35);}
 #pw-error{color:#ff5252;font-size:13px;min-height:18px;}
 
-/* メイン画面 */
 #main-screen{display:none;padding:16px;}
 
 h2{
@@ -60,11 +52,21 @@ h2{
   text-shadow:0 1px 4px rgba(0,0,0,0.4);
   margin:8px 0 16px;
 }
-h3{
+h3{font-size:14px;color:#90caf9;margin:16px 0 6px;}
+
+input, select{
+  background:rgba(255,255,255,0.08);
+  color:white;
+  border:1px solid rgba(255,255,255,0.15);
+  border-radius:10px;
+  padding:8px 10px;
+  margin:4px 0;
+  width:100%;
+  box-sizing:border-box;
+  font-family:"Trebuchet MS",sans-serif;
   font-size:14px;
-  color:#90caf9;
-  margin:16px 0 6px;
 }
+select option{background:#1c3140;color:white;}
 
 button{
   padding:10px 16px;
@@ -99,7 +101,6 @@ button:active{transform:scale(0.95);}
   margin-top:24px;
 }
 
-/* カード */
 .card{
   background:rgba(0,0,0,0.4);
   border:1px solid rgba(255,255,255,0.08);
@@ -107,6 +108,7 @@ button:active{transform:scale(0.95);}
   padding:12px 14px;
   margin:6px 0;
 }
+
 .list-card{
   background:rgba(0,0,0,0.4);
   border:1px solid rgba(255,255,255,0.08);
@@ -123,19 +125,12 @@ button:active{transform:scale(0.95);}
 
 .time{font-weight:bold;font-size:15px;}
 .name{font-size:13px;color:rgba(255,255,255,0.7);}
+.pending-hint{font-size:11px;color:rgba(255,255,255,0.35);margin-top:2px;}
 
-.badge{
-  font-size:10px;
-  padding:2px 8px;
-  border-radius:20px;
-  font-weight:bold;
-}
+.badge{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:bold;}
 .badge.confirmed{background:rgba(0,229,255,0.15);color:#00e5ff;}
 .badge.pending{background:rgba(255,193,7,0.15);color:#ffc107;}
 
-.pending-hint{font-size:11px;color:rgba(255,255,255,0.35);margin-top:2px;}
-
-/* 件数バッジ */
 .count{
   display:inline-block;
   background:rgba(0,229,255,0.15);
@@ -146,7 +141,6 @@ button:active{transform:scale(0.95);}
   margin-left:6px;
 }
 
-/* 統計 */
 .stats{
   display:grid;
   grid-template-columns:repeat(3,1fr);
@@ -163,7 +157,6 @@ button:active{transform:scale(0.95);}
 .stat-num{font-size:24px;font-weight:bold;color:#00e5ff;}
 .stat-label{font-size:11px;color:rgba(255,255,255,0.5);margin-top:2px;}
 
-/* overlay */
 .overlay{
   position:fixed;top:0;left:0;
   width:100%;height:100%;
@@ -174,7 +167,6 @@ button:active{transform:scale(0.95);}
   z-index:9999;
 }
 
-/* 確認モーダル */
 #confirm-modal{
   position:fixed;top:0;left:0;
   width:100%;height:100%;
@@ -198,6 +190,29 @@ button:active{transform:scale(0.95);}
 .modal-btns button{flex:1;}
 .btn-cancel{background:rgba(255,255,255,0.08);color:white;}
 .btn-confirm-del{background:#ff5252;color:white;}
+
+.sheet-tabs{
+  display:flex;
+  gap:6px;
+  margin-bottom:12px;
+  flex-wrap:wrap;
+}
+.sheet-tab{
+  padding:6px 14px;
+  border-radius:20px;
+  font-size:13px;
+  background:rgba(255,255,255,0.08);
+  color:rgba(255,255,255,0.6);
+  border:1px solid rgba(255,255,255,0.15);
+  cursor:pointer;
+  transition:0.2s;
+}
+.sheet-tab.active{
+  background:#00e5ff;
+  color:black;
+  border-color:#00e5ff;
+  box-shadow:0 0 6px rgba(0,229,255,0.4);
+}
 </style>
 </head>
 <body>
@@ -205,7 +220,7 @@ button:active{transform:scale(0.95);}
 <!-- パスワード画面 -->
 <div id="pw-screen">
   <h2>🔒 管理者ページ</h2>
-  <input id="pw-input" type="password" placeholder="1232" maxlength="20">
+  <input id="pw-input" type="password" placeholder="パスワードを入力" maxlength="20">
   <div id="pw-error"></div>
   <button class="btn-primary" onclick="checkPassword()">ログイン</button>
 </div>
@@ -214,7 +229,12 @@ button:active{transform:scale(0.95);}
 <div id="main-screen">
   <h2>管理者ページ</h2>
 
-  <!-- 統計 -->
+  <div class="sheet-tabs">
+    <div class="sheet-tab active" onclick="switchSheet('副執政官（月）', this)">副執政官（月）</div>
+    <div class="sheet-tab" onclick="switchSheet('副執政官（火）', this)">副執政官（火）</div>
+    <div class="sheet-tab" onclick="switchSheet('教育部長', this)">教育部長</div>
+  </div>
+
   <div class="stats">
     <div class="stat-box">
       <div class="stat-num" id="stat-total">-</div>
@@ -232,11 +252,9 @@ button:active{transform:scale(0.95);}
 
   <button class="btn-primary" onclick="load()" style="margin-bottom:8px">🔄 更新</button>
 
-  <!-- 確定済み -->
   <h3>確定済み <span class="count" id="count-confirmed">0</span></h3>
   <div id="list-confirmed"></div>
 
-  <!-- 調整中 -->
   <h3>調整中 <span class="count" id="count-pending">0</span></h3>
   <div id="list-pending"></div>
 
@@ -259,10 +277,11 @@ button:active{transform:scale(0.95);}
 
 <script>
 const API = "https://script.google.com/macros/s/AKfycbylkYrl4A2fYdCIdTZ2KDcXYrf-ihGeMIwHSUCAsBwnX_kVjgmox3cE1m5sgfvES4Hsdg/exec";
-const ADMIN_PW = "1232"; // GAS側と同じパスワード
+const ADMIN_PW = "1232";
 
 let password = "";
 let deleteTarget = null;
+let currentSheet = "副執政官（月）";
 
 // ===== パスワード =====
 document.getElementById("pw-input").addEventListener("keydown", e => {
@@ -291,15 +310,24 @@ function logout(){
   document.getElementById("pw-error").textContent = "";
 }
 
+// ===== シート切り替え =====
+function switchSheet(name, el){
+  currentSheet = name;
+  document.querySelectorAll(".sheet-tab").forEach(t => t.classList.remove("active"));
+  el.classList.add("active");
+  load();
+}
+
 // ===== データ読み込み =====
 async function load(){
   showLoading("読み込み中...");
   try {
-    const res  = await fetch(API);
-    const data = await res.json();
+    const res  = await fetch(API + "?sheet=" + encodeURIComponent(currentSheet));
+    const text = await res.text();
+    const data = JSON.parse(text);
     render(data);
   } catch(e) {
-    alert("読み込み失敗");
+    alert("読み込み失敗: " + e.message);
   }
   hideLoading();
 }
@@ -308,14 +336,19 @@ function render(data){
   const confirmed = data.filter(d => d.status === "confirmed");
   const pending   = data.filter(d => d.status !== "confirmed");
 
-  document.getElementById("stat-total").textContent     = data.length;
-  document.getElementById("stat-confirmed").textContent = confirmed.length;
-  document.getElementById("stat-pending").textContent   = pending.length;
+  document.getElementById("stat-total").textContent      = data.length;
+  document.getElementById("stat-confirmed").textContent  = confirmed.length;
+  document.getElementById("stat-pending").textContent    = pending.length;
   document.getElementById("count-confirmed").textContent = confirmed.length;
   document.getElementById("count-pending").textContent   = pending.length;
 
-  document.getElementById("list-confirmed").innerHTML = confirmed.map(d => cardHTML(d)).join("") || "<div style='color:rgba(255,255,255,0.3);font-size:13px;padding:8px'>なし</div>";
-  document.getElementById("list-pending").innerHTML   = pending.map(d => cardHTML(d)).join("")   || "<div style='color:rgba(255,255,255,0.3);font-size:13px;padding:8px'>なし</div>";
+  document.getElementById("list-confirmed").innerHTML = confirmed.length
+    ? confirmed.map(d => cardHTML(d)).join("")
+    : "<div style='color:rgba(255,255,255,0.3);font-size:13px;padding:8px'>なし</div>";
+
+  document.getElementById("list-pending").innerHTML = pending.length
+    ? pending.map(d => cardHTML(d)).join("")
+    : "<div style='color:rgba(255,255,255,0.3);font-size:13px;padding:8px'>なし</div>";
 }
 
 function cardHTML(d){
@@ -330,7 +363,6 @@ function cardHTML(d){
     ? `<span class="badge confirmed">確定</span>`
     : `<span class="badge pending">調整中</span>`;
 
-  // onclick用にデータをエスケープして渡す
   const dataStr = encodeURIComponent(JSON.stringify({
     time:   d.time   || "",
     name:   d.name   || "",
@@ -367,11 +399,8 @@ function closeModal(){
 
 async function executeDelete(){
   if(!deleteTarget) return;
-
-  // ★ closeModalの前にデータを退避
   const target = deleteTarget;
   closeModal();
-
   showLoading("削除中...");
 
   const res = await fetch(API, {
@@ -379,6 +408,7 @@ async function executeDelete(){
     body: new URLSearchParams({
       data: JSON.stringify({
         type:     "delete",
+        sheet:    currentSheet,
         password: password,
         time:     target.time,
         name:     target.name,
@@ -399,11 +429,9 @@ async function executeDelete(){
     alert("削除失敗: " + text);
     return;
   }
-
   load();
 }
 
-// ===== ローディング =====
 function showLoading(msg){
   const el = document.getElementById("loading");
   el.textContent = msg;
